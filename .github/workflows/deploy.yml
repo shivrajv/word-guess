@@ -1,0 +1,36 @@
+name: Deploy to GitHub Pages
+
+# Publishes the live game to the root of the gh-pages branch
+# whenever changes land on main.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Publish to gh-pages root
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
+          publish_branch: gh-pages
+          # Don't wipe open PR previews living under /pr-preview/.
+          keep_files: true
+          # Keep workflow/meta files out of the published site.
+          exclude_assets: '.github,README.md,.gitignore'
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Deploy live site from main'
