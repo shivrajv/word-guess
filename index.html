@@ -64,21 +64,47 @@
     }
     .emoji-card {
       max-width: 32rem;
-      margin: 0 auto 1.25rem;
+      margin: 0 auto 1rem;
       background: var(--card);
       border-radius: 1.25rem;
       box-shadow: var(--shadow);
       padding: 1.75rem 1rem;
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: center;
-      gap: clamp(0.5rem, 4vw, 2rem);
+      gap: clamp(0.4rem, 3vw, 1.5rem);
     }
     .emoji {
-      font-size: clamp(3rem, 15vw, 5rem);
       line-height: 1;
       user-select: none;
     }
+    /* emoji size scales down as more clues are revealed */
+    .emoji-card.size-lg .emoji { font-size: clamp(3rem, 15vw, 5rem); }
+    .emoji-card.size-md .emoji { font-size: clamp(2.5rem, 10vw, 3.5rem); }
+    .emoji-card.size-sm .emoji { font-size: clamp(1.9rem, 7vw, 2.75rem); }
+
+    .more-wrap {
+      max-width: 32rem;
+      margin: 0 auto 1.25rem;
+      display: flex;
+      justify-content: center;
+      min-height: 2.4rem;
+    }
+    .more-btn {
+      appearance: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--accent);
+      border: 2px solid var(--accent);
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 0.55rem 1.4rem;
+      border-radius: 999px;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+    }
+    .more-btn:hover { background: var(--accent); color: var(--accent-ink); }
+    .more-btn:active { transform: translateY(1px) scale(0.99); }
     .controls {
       max-width: 32rem;
       margin: 0 auto;
@@ -117,11 +143,14 @@
   <div class="middle" id="counter"></div>
 
   <section class="emoji-zone">
-    <div class="emoji-card" id="emojis"></div>
+    <div class="emoji-card size-lg" id="emojis"></div>
+    <div class="more-wrap">
+      <button class="more-btn" id="more" type="button">＋ More emojis</button>
+    </div>
     <div class="controls">
       <button class="next-btn" id="next" type="button">Next word →</button>
     </div>
-    <p class="hint">Tap “Next word” or press Space</p>
+    <p class="hint">Tap “More emojis” for extra clues · “Next word” or Space for a new word</p>
   </section>
 
   <script>
@@ -234,17 +263,49 @@
     const counterEl = document.getElementById("counter");
     const nextBtn   = document.getElementById("next");
 
-    let current = -1;
+    const moreBtn = document.getElementById("more");
 
-    function pick3(pool) {
-      // unique random 3 from the pool
-      const copy = pool.slice();
-      const out = [];
-      while (out.length < 3 && copy.length) {
-        const i = Math.floor(Math.random() * copy.length);
-        out.push(copy.splice(i, 1)[0]);
+    const START = 3;   // emojis shown when a word first appears
+    const STEP  = 3;   // emojis revealed per "More emojis" tap
+
+    let current = -1;
+    let shuffled = [];   // this word's 15 emojis in a shuffled order
+    let revealed = START;
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
       }
-      return out;
+      return a;
+    }
+
+    function sizeClass(n) {
+      if (n <= 3) return "size-lg";
+      if (n <= 6) return "size-md";
+      return "size-sm";
+    }
+
+    function render() {
+      emojisEl.className = "emoji-card " + sizeClass(revealed);
+      emojisEl.innerHTML = "";
+      shuffled.slice(0, revealed).forEach(function (em) {
+        const span = document.createElement("span");
+        span.className = "emoji";
+        span.textContent = em;
+        emojisEl.appendChild(span);
+      });
+
+      const remaining = shuffled.length - revealed;
+      if (remaining > 0) {
+        moreBtn.style.display = "";
+        moreBtn.textContent = "＋ More emojis (" + remaining + " left)";
+      } else {
+        moreBtn.style.display = "none";   // all 15 shown → button disappears
+      }
+
+      counterEl.textContent = "Word " + (current + 1) + " of " + WORDS.length;
     }
 
     function nextWord() {
@@ -253,20 +314,19 @@
         while (idx === current) idx = Math.floor(Math.random() * WORDS.length);
       }
       current = idx;
-      const entry = WORDS[idx];
+      wordEl.textContent = WORDS[idx].w;
+      shuffled = shuffle(WORDS[idx].e);
+      revealed = START;
+      render();
+    }
 
-      wordEl.textContent = entry.w;
-      emojisEl.innerHTML = "";
-      pick3(entry.e).forEach(function (em) {
-        const span = document.createElement("span");
-        span.className = "emoji";
-        span.textContent = em;
-        emojisEl.appendChild(span);
-      });
-      counterEl.textContent = "Word " + (idx + 1) + " of " + WORDS.length;
+    function moreEmojis() {
+      revealed = Math.min(revealed + STEP, shuffled.length);
+      render();
     }
 
     nextBtn.addEventListener("click", nextWord);
+    moreBtn.addEventListener("click", moreEmojis);
     document.addEventListener("keydown", function (e) {
       if (e.code === "Space" || e.key === " ") {
         e.preventDefault();
