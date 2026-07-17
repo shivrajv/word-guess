@@ -185,7 +185,7 @@
        layout doesn't jump when the button hides itself once all 15 are shown. */
     .more-wrap {
       max-width: 32rem;
-      margin: 0 auto 1.25rem;
+      margin: 1.25rem auto 1.25rem;    /* space above so it isn't touching the word buttons */
       display: flex;
       justify-content: center;
       min-height: 2.4rem;
@@ -227,8 +227,9 @@
       box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
       transition: transform 0.08s ease, box-shadow 0.15s ease;
     }
-    .next-btn:hover { box-shadow: 0 10px 26px rgba(99, 102, 241, 0.45); } /* lift on hover */
-    .next-btn:active { transform: translateY(1px) scale(0.99); }         /* press-down effect */
+    .next-btn:not(:disabled):hover  { box-shadow: 0 10px 26px rgba(99, 102, 241, 0.45); } /* lift on hover */
+    .next-btn:not(:disabled):active { transform: translateY(1px) scale(0.99); }           /* press-down effect */
+    .next-btn:disabled { opacity: 0.4; box-shadow: none; cursor: default; }               /* off until you answer */
     /* Small grey helper text under the buttons. */
     .hint {
       text-align: center;
@@ -360,7 +361,7 @@
       { w: "Burger",      e: ["🍔","🍟","🥤","🧀","🥓","🥬","🍅","🧅","🔥","🐄","🍞","🥒","😋","🍴","🥩"] },
       { w: "Sushi",       e: ["🍣","🍙","🐟","🍚","🥢","🇯🇵","🦐","🥑","🌊","🐙","🍶","🥒","🍤","🧑‍🍳","🐠"] },
       { w: "Cake",        e: ["🎂","🍰","🧁","🍓","🕯️","🎉","🎈","🍫","🎊","🥳","🍦","😋","🍒","🎁","🫐"] },
-      { w: "Coffee",      e: ["☕","🫘","🥛","🍩","😴","🌅","📚","💻","🔥","🥐","🇧🇷","🤎","🍪","🧑‍💻","⏰"] },
+      { w: "Coffee",      e: ["☕","🫘","🥛","🍩","😴","🌅","📚","💻","🔥","🥐","🥱","🤎","🍪","🧑‍💻","⏰"] },
       { w: "Ice Cream",   e: ["🍦","🍨","🍧","🍓","🍫","🌈","😋","🥶","🧇","🍒","🌞","🥄","🥛","🏖️","🧁"] },
       { w: "Taco",        e: ["🌮","🌯","🌶️","🧀","🥑","🇲🇽","🍅","🥩","🌽","🧅","🫓","🥬","🔥","😋","🍋"] },
       { w: "Breakfast",   e: ["🍳","🥓","🥞","☕","🥐","🧇","🍞","🥚","🥯","🍊","🥛","🌅","🥣","🧈","🍌"] },
@@ -556,6 +557,7 @@
       });
 
       hintBtn.disabled = true;                     // no more hints after answering
+      nextBtn.disabled = false;                    // now "Next word" unlocks
     }
 
     // Start a fresh round: take the next word from the shuffled queue, build new
@@ -574,6 +576,7 @@
       markEl.textContent = "";
       markEl.className = "mark";
       hintBtn.disabled = false;
+      nextBtn.disabled = true;               // can't skip ahead — you must answer first
 
       shuffled = shuffle(WORDS[current].e);  // shuffle this word's 15 emojis
       revealed = START;                      // show just 3 to begin with
@@ -647,6 +650,7 @@
       if (e.code === "Space" || e.key === " ") {
         e.preventDefault();
         if (!gameoverEl.hidden) return;   // ignore Space while Game Over is showing
+        if (!answered) return;            // must answer before Space can advance
         nextWord();
       }
     });
