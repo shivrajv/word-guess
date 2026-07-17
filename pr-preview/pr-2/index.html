@@ -72,10 +72,10 @@
     #timer { color: var(--ink); }
     #timer.low { color: var(--bad); }  /* clock turns red in the last few seconds */
 
-    /* ===== TOP AREA: the four answer choices ===== */
-    .options-zone {
+    /* ===== BOTTOM AREA: the answer buttons + controls (kept low for thumb reach) ===== */
+    .answer-zone {
       flex: 0 0 auto;                 /* take only as much height as its content needs */
-      padding: 1rem 1.25rem 1rem;
+      padding: 0.5rem 1.25rem 2rem;
       text-align: center;
     }
     /* Small uppercase label above the choices ("WHICH WORD..."). */
@@ -151,10 +151,10 @@
       100% { transform: scale(1);   opacity: 1; }
     }
 
-    /* ===== BOTTOM AREA: the emoji clue card and the buttons ===== */
-    .emoji-zone {
+    /* ===== TOP AREA: the emoji clue card ===== */
+    .clue-zone {
       flex: 0 0 auto;
-      padding: 1.5rem 1.25rem 2.5rem;
+      padding: 1.5rem 1.25rem 0.5rem;
     }
     /* The white rounded card that holds the emoji clues. It's a flex row that
        wraps onto more lines (flex-wrap) once there are too many emojis to fit. */
@@ -276,23 +276,27 @@
     <div class="appname">Word Guess</div>
   </header>
 
-  <!-- The four answer choices. The JavaScript creates the four buttons inside
-       #options and decides which one is correct. -->
-  <section class="options-zone">
-    <div class="kicker">Which word do these emojis mean?</div>
-    <div class="options" id="options"></div>
+  <!-- TOP: the emoji clues. Moved up here (they used to be at the bottom) so they
+       stay out of the way of your thumb on a phone. -->
+  <section class="clue-zone">
+    <!-- #emojis is filled by the JavaScript with one <span> per revealed emoji. -->
+    <div class="emoji-card size-lg" id="emojis"></div>
   </section>
 
   <!-- MIDDLE: the ✓ / ✗ marker. Empty until you answer; the JavaScript fills it. -->
   <div class="mark-zone"><span class="mark" id="mark"></span></div>
 
-  <!-- BOTTOM: the emoji clues and the two buttons. -->
-  <section class="emoji-zone">
-    <!-- #emojis is filled by the JavaScript with one <span> per revealed emoji. -->
-    <div class="emoji-card size-lg" id="emojis"></div>
+  <!-- BOTTOM: the word buttons + controls. Moved down here (they used to be at the
+       top) so they sit within one-handed thumb reach. -->
+  <section class="answer-zone">
+    <div class="kicker">Which word do these emojis mean?</div>
 
-    <!-- "Hint" button. Each tap reveals more emojis but costs 1 point. The
-         JavaScript hides it once all 15 emojis are shown. -->
+    <!-- The four answer choices. The JavaScript fills #options with the buttons
+         and decides which one is correct. -->
+    <div class="options" id="options"></div>
+
+    <!-- "Hint" button. Each tap reveals more emojis (up top) but costs 1 point.
+         The JavaScript hides it once all 15 emojis are shown. -->
     <div class="more-wrap">
       <button class="more-btn" id="hint" type="button">Hint</button>
     </div>
@@ -334,7 +338,7 @@
       { w: "Ocean",       e: ["🌊","🐳","🐬","🐠","🦈","🐙","🏝️","⛵","🐚","🪸","🧜‍♀️","🌅","🦀","🐋","⚓"] },
       { w: "Mountain",    e: ["⛰️","🏔️","🥾","🧗","🏕️","🌲","🦅","🎿","⛷️","🏂","🌄","🧭","🏞️","🐐","❄️"] },
       { w: "Forest",      e: ["🌲","🌳","🍄","🦌","🦉","🐻","🐿️","🍂","🌿","🏕️","🪵","🐺","🦊","🌱","🥾"] },
-      { w: "Volcano",     e: ["🌋","🔥","💥","🌡️","🏔️","💨","🪨","😱","🧨","⛰️","🦖","🌫️","🚁","🏝️","🔴"] },
+      { w: "Volcano",     e: ["🌋","🔥","💥","🌡️","🏔️","💨","🪨","😱","🧨","⛰️","🦖","🌫️","♨️","🏝️","🔴"] },
       { w: "Moon",        e: ["🌙","🌕","🌑","🚀","👨‍🚀","⭐","🌌","🐺","🦉","🌜","🌛","🔭","🌠","🛸","🌚"] },
       { w: "Star",        e: ["⭐","🌟","✨","🌠","🌌","🔭","💫","🌃","🎇","🪐","🌙","🥇","🎬","🤩","🎆"] },
       { w: "Dog",         e: ["🐕","🐶","🦴","🐾","🎾","🦮","🐕‍🦺","🏠","🍖","😃","🐩","🚶","🥏","🐺","❤️"] },
@@ -350,7 +354,7 @@
       { w: "Frog",        e: ["🐸","🌿","🪷","💚","🦟","🌧️","🪰","🍄","🌳","🌊","👑","🪴","🌱","🐍","🟢"] },
       { w: "Penguin",     e: ["🐧","❄️","🧊","🐟","🏔️","⛄","🥶","🌨️","🇦🇶","🏊","🥚","🖤","🤵","🌊","🐣"] },
       { w: "Dinosaur",    e: ["🦕","🦖","🌋","🥚","🦴","🌿","🌴","💥","🐊","🏛️","🔬","🪨","☄️","🌡️","🥩"] },
-      { w: "Dragon",      e: ["🐉","🔥","🐲","🏰","🗡️","👑","💎","🀄","🧙","🥚","🏮","🐍","🦖","✨","🛡️"] },
+      { w: "Dragon",      e: ["🐉","🔥","🐲","🏰","🗡️","👑","💎","🏯","🧙","🥚","🏮","🐍","🦖","✨","🛡️"] },
       { w: "Unicorn",     e: ["🦄","🌈","✨","💖","🦋","🌸","👑","🍭","🌟","💫","🎠","🪄","🩷","☁️","🦓"] },
       { w: "Pizza",       e: ["🍕","🧀","🍅","🍄","🔥","🇮🇹","🥤","🫒","🧑‍🍳","📦","🍽️","🌶️","🥓","🧅","🫓"] },
       { w: "Burger",      e: ["🍔","🍟","🥤","🧀","🥓","🥬","🍅","🧅","🔥","🐄","🍞","🥒","😋","🍴","🥩"] },
@@ -411,7 +415,7 @@
       { w: "Rocket",      e: ["🚀","🌌","🔥","🪐","👨‍🚀","🌠","🛰️","💥","🌍","⭐","🧑‍🚀","⏱️","🛸","🌑","🎇"] },
       { w: "Phone",       e: ["📱","📲","🔋","📶","💬","📞","🤳","🎧","🔔","📸","⌨️","🔌","📩","🎮","👆"] },
       { w: "Computer",    e: ["💻","🖥️","⌨️","🖱️","🧑‍💻","🖨️","💾","📀","🔌","📊","🌐","🖲️","🕹️","📁","💡"] },
-      { w: "Camera",      e: ["📷","📸","🎥","🖼️","🎞️","📹","🤳","🌄","🎬","🏞️","👁️","🎦","🔍","🌅","📀"] },
+      { w: "Camera",      e: ["📷","📸","🎥","🖼️","🎞️","📹","🤳","🌄","🎬","🏞️","👁️","🎦","🔍","🌅","🔴"] },
       { w: "Clock",       e: ["🕐","⏰","⏱️","⌚","🕰️","⏲️","🔔","🌅","📅","🛎️","🕛","⏳","🧭","🌙","🕧"] },
       { w: "Book",        e: ["📖","📚","🔖","✏️","🤓","📕","📗","📘","📝","🧠","🕯️","📜","✒️","📙","👓"] },
       { w: "Money",       e: ["💰","💵","💴","💶","💷","🪙","💳","🏦","🤑","💸","📈","🏧","💎","🧾","🤝"] },

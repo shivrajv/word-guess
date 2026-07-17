@@ -45,10 +45,37 @@
       -webkit-font-smoothing: antialiased; /* slightly smoother text on some browsers */
     }
 
+    /* ===== TOP BAR: app name centered, with the score + timer HUD on the left ===== */
+    .topbar {
+      flex: 0 0 auto;
+      position: relative;              /* lets the HUD sit absolutely on the left */
+      text-align: center;
+      padding: 1.25rem 1rem 0.25rem;
+    }
+    .appname {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+    /* The score + timer, pinned to the top-left corner. */
+    .hud {
+      position: absolute;
+      left: 0.9rem;
+      top: 1.1rem;
+      display: flex;
+      gap: 0.6rem;
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+    #score { color: var(--accent); }   /* points in purple */
+    #timer { color: var(--ink); }
+    #timer.low { color: var(--bad); }  /* clock turns red in the last few seconds */
+
     /* ===== TOP AREA: the four answer choices ===== */
     .options-zone {
       flex: 0 0 auto;                 /* take only as much height as its content needs */
-      padding: 2rem 1.25rem 1rem;
+      padding: 1rem 1.25rem 1rem;
       text-align: center;
     }
     /* Small uppercase label above the choices ("WHICH WORD..."). */
@@ -209,13 +236,48 @@
       font-size: 0.75rem;
       margin-top: 0.9rem;
     }
+
+    /* ===== GAME OVER overlay: covers the whole screen when the timer hits 0 =====
+       The [hidden] attribute keeps it off-screen until the JavaScript reveals it. */
+    .gameover {
+      position: fixed;
+      inset: 0;                        /* shorthand for top/right/bottom/left: 0 */
+      background: rgba(15, 18, 30, 0.72);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      z-index: 10;                     /* sit on top of everything else */
+    }
+    .gameover[hidden] { display: none; }   /* the hidden attribute wins over display:flex */
+    .go-card {
+      background: var(--card);
+      border-radius: 1.25rem;
+      box-shadow: var(--shadow);
+      padding: 2.5rem 2rem;
+      text-align: center;
+      max-width: 22rem;
+      width: 100%;
+    }
+    .go-title { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .go-score { font-size: 1.1rem; color: var(--muted); margin-bottom: 1.75rem; }
+    .go-score strong { color: var(--accent); font-size: 1.4rem; }
   </style>
 </head>
 <!-- The <body> is the visible page. Elements with an id="" are the ones the
      JavaScript at the bottom finds and updates while you play. -->
 <body>
-  <!-- TOP: the four answer choices. The JavaScript creates the four buttons
-       inside #options and decides which one is correct. -->
+  <!-- Top bar: the score + timer HUD sits at the top-left; the app name is centered. -->
+  <header class="topbar">
+    <div class="hud">
+      <span id="score">★ 0</span>
+      <span id="timer">⏱ 30</span>
+    </div>
+    <div class="appname">Word Guess</div>
+  </header>
+
+  <!-- The four answer choices. The JavaScript creates the four buttons inside
+       #options and decides which one is correct. -->
   <section class="options-zone">
     <div class="kicker">Which word do these emojis mean?</div>
     <div class="options" id="options"></div>
@@ -229,9 +291,10 @@
     <!-- #emojis is filled by the JavaScript with one <span> per revealed emoji. -->
     <div class="emoji-card size-lg" id="emojis"></div>
 
-    <!-- "More emojis" button. The JavaScript shows/hides it and updates its label. -->
+    <!-- "Hint" button. Each tap reveals more emojis but costs 1 point. The
+         JavaScript hides it once all 15 emojis are shown. -->
     <div class="more-wrap">
-      <button class="more-btn" id="more" type="button">＋ More emojis</button>
+      <button class="more-btn" id="hint" type="button">Hint</button>
     </div>
 
     <!-- "Next word" button: jumps to a new random word. -->
@@ -239,8 +302,18 @@
       <button class="next-btn" id="next" type="button">Next word →</button>
     </div>
 
-    <p class="hint"><span id="counter"></span> · Tap “More emojis” for a hint · “Next word” or Space to continue</p>
+    <p class="hint">Each “Hint” costs 1 point · Guess with no hints for the full 5 · “Next word” or Space to continue</p>
   </section>
+
+  <!-- GAME OVER screen. Hidden until the timer runs out, then the JavaScript
+       removes the "hidden" attribute to show it. -->
+  <div class="gameover" id="gameover" hidden>
+    <div class="go-card">
+      <div class="go-title">Game Over</div>
+      <div class="go-score">You scored <strong id="finalScore">0</strong></div>
+      <button class="next-btn" id="again" type="button">Try again</button>
+    </div>
+  </div>
 
   <!-- Everything between <script> and </script> is JavaScript: it controls how
        the page BEHAVES (what happens when you tap the buttons). -->
@@ -266,7 +339,7 @@
       { w: "Star",        e: ["⭐","🌟","✨","🌠","🌌","🔭","💫","🌃","🎇","🪐","🌙","🥇","🎬","🤩","🎆"] },
       { w: "Dog",         e: ["🐕","🐶","🦴","🐾","🎾","🦮","🐕‍🦺","🏠","🍖","😃","🐩","🚶","🥏","🐺","❤️"] },
       { w: "Cat",         e: ["🐈","🐱","🐾","🧶","🐟","😸","🥛","🐈‍⬛","😻","🏠","🐭","😼","🪀","🌙","😹"] },
-      { w: "Lion",        e: ["🦁","👑","🌍","🐾","🌾","😾","🦓","🐆","🏜️","🍖","💪","🌞","🦷","🐅","🎪"] },
+      { w: "Lion",        e: ["🦁","👑","🌍","🐾","🌾","😾","🦓","🐆","🏜️","🍖","💪","🌞","🦴","🐅","🎪"] },
       { w: "Elephant",    e: ["🐘","🌍","🥜","🌿","💧","🐾","🌳","👂","🦣","🇹🇭","🎪","🩶","🌊","🦏","💪"] },
       { w: "Monkey",      e: ["🐒","🍌","🌴","🙈","🙉","🙊","🌳","🐵","🤪","🎪","🥥","🌿","🦧","🤸","🍃"] },
       { w: "Snake",       e: ["🐍","🌿","🥚","🍎","🎋","🏜️","🧺","🪈","😨","🦎","🌳","💚","🩸","🐲","🕳️"] },
@@ -284,7 +357,7 @@
       { w: "Sushi",       e: ["🍣","🍙","🐟","🍚","🥢","🇯🇵","🦐","🥑","🌊","🐙","🍶","🥒","🍤","🧑‍🍳","🐠"] },
       { w: "Cake",        e: ["🎂","🍰","🧁","🍓","🕯️","🎉","🎈","🍫","🎊","🥳","🍦","😋","🍒","🎁","🫐"] },
       { w: "Coffee",      e: ["☕","🫘","🥛","🍩","😴","🌅","📚","💻","🔥","🥐","🇧🇷","🤎","🍪","🧑‍💻","⏰"] },
-      { w: "Icecream",    e: ["🍦","🍨","🍧","🍓","🍫","🌈","😋","🥶","🧇","🍒","🌞","🥄","🥛","🏖️","🧁"] },
+      { w: "Ice Cream",   e: ["🍦","🍨","🍧","🍓","🍫","🌈","😋","🥶","🧇","🍒","🌞","🥄","🥛","🏖️","🧁"] },
       { w: "Taco",        e: ["🌮","🌯","🌶️","🧀","🥑","🇲🇽","🍅","🥩","🌽","🧅","🫓","🥬","🔥","😋","🍋"] },
       { w: "Breakfast",   e: ["🍳","🥓","🥞","☕","🥐","🧇","🍞","🥚","🥯","🍊","🥛","🌅","🥣","🧈","🍌"] },
       { w: "Fruit",       e: ["🍎","🍌","🍓","🍇","🍊","🍉","🍍","🥝","🍑","🍒","🥭","🍐","🫐","🍈","🥥"] },
@@ -327,24 +400,24 @@
       { w: "Birthday",    e: ["🎂","🎉","🎈","🎁","🥳","🕯️","🍰","🎊","🧁","🎀","🎵","🍭","👑","🎇","📅"] },
       { w: "Christmas",   e: ["🎄","🎅","🎁","❄️","⛄","🦌","🔔","🌟","🕯️","🧦","🍪","⛪","🎶","🎀","🤶"] },
       { w: "Halloween",   e: ["🎃","👻","🦇","🕷️","🕸️","🍬","💀","🧙","🧟","🌕","⚰️","🕯️","🦉","🧛","🪦"] },
-      { w: "NewYear",     e: ["🎆","🎇","🥂","🍾","🎉","🕛","🎊","✨","🗓️","🥳","🌃","💃","🎈","🔔","🌟"] },
+      { w: "New Year",    e: ["🎆","🎇","🥂","🍾","🎉","🕛","🎊","✨","🗓️","🥳","🌃","💃","🎈","🔔","🌟"] },
       { w: "Valentine",   e: ["💘","❤️","🌹","💌","🍫","💑","💍","🥰","💕","🧸","💋","🌷","💐","😘","💖"] },
       { w: "Easter",      e: ["🐰","🥚","🐣","🌷","🧺","🐇","🍫","🌸","🐥","🎀","🌼","⛪","🥕","🪺","🐤"] },
       { w: "Thanksgiving",e: ["🦃","🍁","🍂","🥧","🌽","🍽️","🙏","👨‍👩‍👧‍👦","🥔","🍞","🕯️","🌰","🥂","🧡","🍗"] },
-      { w: "Car",         e: ["🚗","🛣️","🅿️","⛽","🚦","🔑","🛞","🚙","🏁","🚘","🗺️","🚧","🔧","🚥","🎵"] },
+      { w: "Car",         e: ["🚗","🛣️","🅿️","⛽","🚦","🔑","🛞","🚙","🏁","🚘","🗺️","🚧","🔧","🚥","🛻"] },
       { w: "Train",       e: ["🚂","🚃","🚉","🛤️","🎫","🚄","🧳","🕐","🚆","🌫️","🚇","🗺️","👨‍✈️","📢","🏞️"] },
-      { w: "Plane",       e: ["✈️","🛫","🛬","🧳","🌍","☁️","🎫","👨‍✈️","🛩️","🗺️","🪂","🌤️","🛄","🕐","🥤"] },
+      { w: "Plane",       e: ["✈️","🛫","🛬","🧳","🌍","☁️","🎫","👨‍✈️","🛩️","🗺️","🪂","🌤️","🛄","🕐","🛃"] },
       { w: "Boat",        e: ["⛵","🚤","🛥️","🌊","⚓","🛟","🎣","🏝️","🧭","🐬","🚣","⛴️","🌅","🪝","🦺"] },
       { w: "Rocket",      e: ["🚀","🌌","🔥","🪐","👨‍🚀","🌠","🛰️","💥","🌍","⭐","🧑‍🚀","⏱️","🛸","🌑","🎇"] },
       { w: "Phone",       e: ["📱","📲","🔋","📶","💬","📞","🤳","🎧","🔔","📸","⌨️","🔌","📩","🎮","👆"] },
       { w: "Computer",    e: ["💻","🖥️","⌨️","🖱️","🧑‍💻","🖨️","💾","📀","🔌","📊","🌐","🖲️","🕹️","📁","💡"] },
       { w: "Camera",      e: ["📷","📸","🎥","🖼️","🎞️","📹","🤳","🌄","🎬","🏞️","👁️","🎦","🔍","🌅","📀"] },
-      { w: "Clock",       e: ["🕐","⏰","⏱️","⌚","🕰️","⏲️","🔔","🌅","📅","🛎️","🕛","⏳","🧭","🌙","🔂"] },
+      { w: "Clock",       e: ["🕐","⏰","⏱️","⌚","🕰️","⏲️","🔔","🌅","📅","🛎️","🕛","⏳","🧭","🌙","🕧"] },
       { w: "Book",        e: ["📖","📚","🔖","✏️","🤓","📕","📗","📘","📝","🧠","🕯️","📜","✒️","📙","👓"] },
       { w: "Money",       e: ["💰","💵","💴","💶","💷","🪙","💳","🏦","🤑","💸","📈","🏧","💎","🧾","🤝"] },
       { w: "King",        e: ["👑","🤴","🏰","🗡️","🛡️","💎","🦁","🏆","⚔️","👸","🐴","🏇","📜","🚩","🥇"] },
       { w: "Doctor",      e: ["👨‍⚕️","🩺","💉","💊","🏥","🩹","🌡️","🧑‍⚕️","👩‍⚕️","🩻","➕","🚑","😷","🧬","🩸"] },
-      { w: "Police",      e: ["👮","🚓","🚨","🚔","🛑","🚧","👮‍♀️","📻","🐕‍🦺","🏙️","⚖️","🔦","🪪","🚦","🎯"] },
+      { w: "Police",      e: ["👮","🚓","🚨","🚔","🛑","🚧","👮‍♀️","📻","🐕‍🦺","🏙️","⚖️","🔦","🪪","🚦","🚁"] },
       { w: "Firefighter", e: ["🚒","🔥","👨‍🚒","🧯","🚨","💧","🪜","🚑","👩‍🚒","⛑️","🏚️","🐈","🌊","🧑‍🚒","🚿"] },
       { w: "Love",        e: ["❤️","💕","😍","💘","💑","🌹","💋","🥰","💌","💖","😘","💐","🫶","💝","🩷"] },
       { w: "Happy",       e: ["😀","😄","😁","😊","🥳","😃","🙂","😸","🌈","☀️","🎉","👍","😆","🤗","💛"] },
@@ -357,26 +430,35 @@
     // ===== GRAB THE PAGE ELEMENTS =====
     // document.getElementById("x") finds the element with id="x" in the HTML
     // above, so we can read or change it from JavaScript.
-    const optionsEl = document.getElementById("options"); // holds the 4 choice buttons
-    const emojisEl  = document.getElementById("emojis");  // the emoji card
-    const markEl    = document.getElementById("mark");    // the ✓ / ✗ marker
-    const counterEl = document.getElementById("counter"); // the "Word N of 100" text
-    const nextBtn   = document.getElementById("next");    // the "Next word" button
-    const moreBtn   = document.getElementById("more");    // the "More emojis" button
+    const optionsEl = document.getElementById("options");   // holds the 4 choice buttons
+    const emojisEl  = document.getElementById("emojis");    // the emoji card
+    const markEl    = document.getElementById("mark");      // the ✓ / ✗ marker
+    const nextBtn   = document.getElementById("next");      // the "Next word" button
+    const hintBtn   = document.getElementById("hint");      // the "Hint" button
+    const scoreEl   = document.getElementById("score");     // the score in the top-left HUD
+    const timerEl   = document.getElementById("timer");     // the countdown in the HUD
+    const gameoverEl   = document.getElementById("gameover");    // the Game Over overlay
+    const finalScoreEl = document.getElementById("finalScore");  // final score shown inside it
+    const againBtn     = document.getElementById("again");       // the "Try again" button
 
     // ===== SETTINGS (change these to tune the game) =====
-    const START   = 3;   // how many emojis show when a word first appears
-    const STEP    = 3;   // how many more emojis each "More emojis" tap reveals
-    const CHOICES = 4;   // how many answer options to show (1 correct + 3 decoys)
+    const START      = 3;    // how many emojis show when a word first appears
+    const STEP       = 3;    // how many more emojis each "Hint" tap reveals
+    const CHOICES    = 4;    // how many answer options to show (1 correct + 3 decoys)
+    const MAX_POINTS = 5;    // points a word is worth with no hints used
+    const GAME_TIME  = 30;   // seconds on the clock for the whole game
 
     // ===== GAME STATE (values that change as you play) =====
     // "let" (unlike "const") means the value can be reassigned later.
-    let current  = -1;      // index (into WORDS) of the word being guessed
-    let shuffled = [];      // the current word's 15 emojis, in a shuffled order
-    let revealed = START;   // how many of those emojis are currently visible
-    let answered = false;   // has the player picked an option this round yet?
-    let queue    = [];      // shuffled word indices still to show in this pass
-    let seen     = 0;       // how many words shown so far this pass (1..100)
+    let current    = -1;          // index (into WORDS) of the word being guessed
+    let shuffled   = [];          // the current word's 15 emojis, in a shuffled order
+    let revealed   = START;       // how many of those emojis are currently visible
+    let answered   = false;       // has the player picked an option this round yet?
+    let queue      = [];          // shuffled word indices still to show in this pass
+    let wordPoints = MAX_POINTS;  // points the current word is worth right now (5, minus hints)
+    let score      = 0;           // total points earned so far (shown top-left)
+    let timeLeft   = GAME_TIME;   // seconds remaining on the clock
+    let timerId    = null;        // handle for the countdown so we can stop it
 
     // Return a shuffled COPY of an array (the original list is left untouched).
     // This is the Fisher–Yates shuffle: walk from the end, swapping each item
@@ -414,18 +496,9 @@
         emojisEl.appendChild(span);                       // put it inside the card
       });
 
-      // Update the "More emojis" button: show how many clues are left, or hide
-      // the button entirely once every emoji has been revealed.
+      // Show the "Hint" button while emojis remain; hide it once all 15 are shown.
       const remaining = shuffled.length - revealed;
-      if (remaining > 0) {
-        moreBtn.style.display = "";                        // make sure it's visible
-        moreBtn.textContent = "＋ More emojis (" + remaining + " left)";
-      } else {
-        moreBtn.style.display = "none";                    // all 15 shown → hide it
-      }
-
-      // Update the "Word N of 100" progress counter for this pass.
-      counterEl.textContent = "Word " + seen + " of " + WORDS.length;
+      hintBtn.style.display = remaining > 0 ? "" : "none";
     }
 
     // Build the four answer choices for a given correct word. Returns an array of
@@ -463,6 +536,13 @@
       markEl.textContent = correct ? "✓" : "✗";
       markEl.className = "mark " + (correct ? "correct" : "wrong");
 
+      // Scoring: a correct answer earns the word's current value (5 minus the
+      // hints used); a wrong answer earns nothing.
+      if (correct) {
+        score += wordPoints;
+        updateScore();
+      }
+
       // Color the buttons and disable every option.
       Array.prototype.forEach.call(optionsEl.children, function (btn) {
         const idx = Number(btn.dataset.idx);
@@ -471,7 +551,7 @@
         else if (idx === chosenIdx) btn.classList.add("wrong");   // and flag a wrong pick
       });
 
-      moreBtn.disabled = true;                     // no more hints after answering
+      hintBtn.disabled = true;                     // no more hints after answering
     }
 
     // Start a fresh round: take the next word from the shuffled queue, build new
@@ -482,47 +562,94 @@
       // every word appears exactly once per pass, then the order changes.
       if (queue.length === 0) {
         queue = shuffle(WORDS.map(function (_, i) { return i; }));
-        seen = 0;
       }
       current = queue.pop();   // take the next word index off the queue
-      seen++;
 
       answered = false;
+      wordPoints = MAX_POINTS;               // a fresh word is worth the full 5 points
       markEl.textContent = "";
       markEl.className = "mark";
-      moreBtn.disabled = false;
+      hintBtn.disabled = false;
 
       shuffled = shuffle(WORDS[current].e);  // shuffle this word's 15 emojis
       revealed = START;                      // show just 3 to begin with
       renderOptions();                       // draw the four choices
-      render();                              // draw the emojis + counter + more button
+      render();                              // draw the emojis + hint button
     }
 
-    // Reveal STEP (3) more emojis, but never more than the 15 that exist, and not
-    // once the round has been answered. Runs when you tap "More emojis".
-    function moreEmojis() {
+    // Use a hint: reveal STEP (3) more emojis (never past 15) and drop this word's
+    // value by 1 point (never below 0). Ignored once the round has been answered.
+    function useHint() {
       if (answered) return;
       revealed = Math.min(revealed + STEP, shuffled.length);
+      wordPoints = Math.max(0, wordPoints - 1);
       render();
+    }
+
+    // Write the current total score into the top-left HUD.
+    function updateScore() {
+      scoreEl.textContent = "★ " + score;
+    }
+
+    // ===== THE TIMER =====
+    // Update the clock display, and turn it red in the last 5 seconds.
+    function updateTimer() {
+      timerEl.textContent = "⏱ " + timeLeft;
+      timerEl.classList.toggle("low", timeLeft <= 5);
+    }
+
+    // Tick once per second. When the clock reaches 0, stop and show Game Over.
+    function tick() {
+      timeLeft--;
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        updateTimer();
+        clearInterval(timerId);
+        endGame();
+        return;
+      }
+      updateTimer();
+    }
+
+    // Show the Game Over overlay with the final score.
+    function endGame() {
+      finalScoreEl.textContent = score;
+      gameoverEl.hidden = false;
+    }
+
+    // Start (or restart) a whole game: reset the score and clock, hide Game Over,
+    // deal the first word, and begin the countdown.
+    function startGame() {
+      if (timerId) clearInterval(timerId);   // stop any previous countdown
+      score = 0;
+      timeLeft = GAME_TIME;
+      queue = [];                            // force a fresh reshuffle of all 100 words
+      gameoverEl.hidden = true;
+      updateScore();
+      updateTimer();
+      nextWord();
+      timerId = setInterval(tick, 1000);     // run tick() every 1000ms (1 second)
     }
 
     // ===== HOOK THE BUTTONS UP =====
     // addEventListener("click", fn) means "run function fn whenever this is clicked".
     nextBtn.addEventListener("click", nextWord);
-    moreBtn.addEventListener("click", moreEmojis);
+    hintBtn.addEventListener("click", useHint);
+    againBtn.addEventListener("click", startGame);   // "Try again" restarts everything
 
-    // Also let the Space key trigger "Next word". e.preventDefault() stops the
-    // page from also scrolling down when Space is pressed.
+    // Also let the Space key trigger "Next word" (but not on the Game Over screen).
+    // e.preventDefault() stops the page from also scrolling when Space is pressed.
     document.addEventListener("keydown", function (e) {
       if (e.code === "Space" || e.key === " ") {
         e.preventDefault();
+        if (!gameoverEl.hidden) return;   // ignore Space while Game Over is showing
         nextWord();
       }
     });
 
     // ===== START THE GAME =====
-    // Show the first word right away when the page finishes loading.
-    nextWord();
+    // Kick off the first game when the page finishes loading.
+    startGame();
   </script>
 </body>
 </html>
