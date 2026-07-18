@@ -173,6 +173,16 @@
       100% { transform: scale(1);   opacity: 1; }
     }
 
+    /* The stage holds the emoji clues + the marker, and is the exact region the
+       Paused panel covers. position: relative lets that panel sit inside it. */
+    .stage {
+      position: relative;
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
     /* ===== TOP AREA: the emoji clue card ===== */
     .clue-zone {
       flex: 0 0 auto;
@@ -285,6 +295,19 @@
     .go-title { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
     .go-score { font-size: 1.1rem; color: var(--muted); margin-bottom: 1.75rem; }
     .go-score strong { color: var(--accent); font-size: 1.4rem; }
+
+    /* ===== PAUSED panel: an opaque cover over the stage so the emojis are fully
+       hidden while paused. The top bar and the answer buttons stay visible. ===== */
+    .pause-panel {
+      position: absolute;
+      inset: 0;                        /* fill the whole stage */
+      background: #0f121e;             /* solid, so the emojis underneath vanish */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+    }
+    .pause-panel[hidden] { display: none; }
   </style>
 </head>
 <!-- The <body> is the visible page. Elements with an id="" are the ones the
@@ -303,15 +326,28 @@
     </button>
   </header>
 
-  <!-- TOP: the emoji clues. Moved up here (they used to be at the bottom) so they
-       stay out of the way of your thumb on a phone. -->
-  <section class="clue-zone">
-    <!-- #emojis is filled by the JavaScript with one <span> per revealed emoji. -->
-    <div class="emoji-card size-lg" id="emojis"></div>
-  </section>
+  <!-- STAGE: the emoji clues + the ✓/✗ marker. The Paused panel lives inside here
+       and covers exactly this area, so pausing hides the emojis while the top bar
+       and the answer buttons below stay visible. -->
+  <div class="stage">
+    <!-- TOP: the emoji clues (moved up so they're out of the way of your thumb). -->
+    <section class="clue-zone">
+      <!-- #emojis is filled by the JavaScript with one <span> per revealed emoji. -->
+      <div class="emoji-card size-lg" id="emojis"></div>
+    </section>
 
-  <!-- MIDDLE: the ✓ / ✗ marker. Empty until you answer; the JavaScript fills it. -->
-  <div class="mark-zone"><span class="mark" id="mark"></span></div>
+    <!-- MIDDLE: the ✓ / ✗ marker. Empty until you answer; the JavaScript fills it. -->
+    <div class="mark-zone"><span class="mark" id="mark"></span></div>
+
+    <!-- PAUSED panel: covers just this stage (the emojis) so you can't study them
+         while the clock is stopped. Hidden until you tap pause. -->
+    <div class="pause-panel" id="paused" hidden>
+      <div class="go-card">
+        <div class="go-title">Paused</div>
+        <button class="next-btn" id="play" type="button">Play</button>
+      </div>
+    </div>
+  </div>
 
   <!-- BOTTOM: the word buttons + controls. Moved down here (they used to be at the
        top) so they sit within one-handed thumb reach. -->
@@ -343,16 +379,6 @@
       <div class="go-title">Game Over</div>
       <div class="go-score">You scored <strong id="finalScore">0</strong></div>
       <button class="next-btn" id="again" type="button">Try again</button>
-    </div>
-  </div>
-
-  <!-- PAUSED screen. Same overlay style as Game Over, but it just says "Paused"
-       and its "Play" button resumes the timer. It covers the whole screen, so
-       while it's up nothing else can be pressed. Hidden until you tap pause. -->
-  <div class="gameover" id="paused" hidden>
-    <div class="go-card">
-      <div class="go-title">Paused</div>
-      <button class="next-btn" id="play" type="button">Play</button>
     </div>
   </div>
 
@@ -663,20 +689,41 @@
       gameoverEl.hidden = false;
     }
 
-    // Pause: stop the countdown and show the Paused overlay. The overlay covers
-    // the whole screen, so nothing but "Play" can be pressed while it's up.
+    // The Paused panel only covers the emojis, so the answer buttons below stay
+    // visible — we must also block them while paused. We snapshot each control's
+    // disabled state on pause and restore it on resume.
+    let pauseSnapshot = null;
+    function pausedControls() {
+      // the four options plus the Hint and Next buttons
+      return Array.prototype.slice.call(optionsEl.children).concat([hintBtn, nextBtn]);
+    }
+    function freezeControls() {
+      const controls = pausedControls();
+      pauseSnapshot = controls.map(function (c) { return c.disabled; });
+      controls.forEach(function (c) { c.disabled = true; });
+    }
+    function thawControls() {
+      if (!pauseSnapshot) return;
+      pausedControls().forEach(function (c, i) { c.disabled = pauseSnapshot[i]; });
+      pauseSnapshot = null;
+    }
+
+    // Pause: stop the countdown, cover the emojis with the Paused panel, and block
+    // every control except "Play".
     function pauseGame() {
       if (!gameoverEl.hidden) return;   // nothing to pause once the game is over
       if (!pausedEl.hidden) return;     // already paused
       clearInterval(timerId);           // freeze the clock exactly where it is
       timerId = null;
-      pausedEl.hidden = false;
+      freezeControls();                 // block the still-visible answer buttons
+      pausedEl.hidden = false;          // show the panel over the emojis
     }
 
-    // Play: hide the Paused overlay and restart the countdown from where it stopped
-    // (timeLeft was never changed, so no time is lost or added).
+    // Play: uncover the emojis, restore the buttons, and restart the countdown from
+    // where it stopped (timeLeft was never changed, so no time is lost or added).
     function resumeGame() {
       pausedEl.hidden = true;
+      thawControls();
       timerId = setInterval(tick, 1000);
     }
 
@@ -689,6 +736,7 @@
       queue = [];                            // force a fresh reshuffle of all 100 words
       gameoverEl.hidden = true;
       pausedEl.hidden = true;                // clear any leftover Paused overlay
+      pauseSnapshot = null;                  // and any stale saved control states
       updateScore();
       updateTimer();
       nextWord();
