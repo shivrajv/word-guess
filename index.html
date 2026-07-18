@@ -71,6 +71,28 @@
     #score { color: var(--accent); }   /* points in purple */
     #timer { color: var(--ink); }
     #timer.low { color: var(--bad); }  /* clock turns red in the last few seconds */
+    /* Pause button, pinned to the top-right corner: two bars drawn with CSS make
+       a crisp pause icon (no reliance on emoji rendering). */
+    .pause-btn {
+      position: absolute;
+      right: 0.9rem;
+      top: 1rem;
+      appearance: none;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: inline-flex;
+      gap: 4px;
+      padding: 0.35rem;
+    }
+    .pause-btn span {
+      display: block;
+      width: 5px;
+      height: 18px;
+      border-radius: 2px;
+      background: var(--ink);
+    }
+    .pause-btn:active { transform: scale(0.94); }   /* small press feedback */
 
     /* ===== BOTTOM AREA: the answer buttons + controls (kept low for thumb reach) ===== */
     .answer-zone {
@@ -275,6 +297,10 @@
       <span id="timer">⏱ 30</span>
     </div>
     <div class="appname">Word Guess</div>
+    <!-- Pause button (top-right). The two spans are the two bars of the pause icon. -->
+    <button class="pause-btn" id="pause" type="button" aria-label="Pause">
+      <span></span><span></span>
+    </button>
   </header>
 
   <!-- TOP: the emoji clues. Moved up here (they used to be at the bottom) so they
@@ -317,6 +343,16 @@
       <div class="go-title">Game Over</div>
       <div class="go-score">You scored <strong id="finalScore">0</strong></div>
       <button class="next-btn" id="again" type="button">Try again</button>
+    </div>
+  </div>
+
+  <!-- PAUSED screen. Same overlay style as Game Over, but it just says "Paused"
+       and its "Play" button resumes the timer. It covers the whole screen, so
+       while it's up nothing else can be pressed. Hidden until you tap pause. -->
+  <div class="gameover" id="paused" hidden>
+    <div class="go-card">
+      <div class="go-title">Paused</div>
+      <button class="next-btn" id="play" type="button">Play</button>
     </div>
   </div>
 
@@ -445,6 +481,9 @@
     const gameoverEl   = document.getElementById("gameover");    // the Game Over overlay
     const finalScoreEl = document.getElementById("finalScore");  // final score shown inside it
     const againBtn     = document.getElementById("again");       // the "Try again" button
+    const pauseBtn     = document.getElementById("pause");       // top-right pause button
+    const pausedEl     = document.getElementById("paused");      // the Paused overlay
+    const playBtn      = document.getElementById("play");        // the "Play" button on it
 
     // ===== SETTINGS (change these to tune the game) =====
     const START      = 3;    // how many emojis show when a word first appears
@@ -624,6 +663,23 @@
       gameoverEl.hidden = false;
     }
 
+    // Pause: stop the countdown and show the Paused overlay. The overlay covers
+    // the whole screen, so nothing but "Play" can be pressed while it's up.
+    function pauseGame() {
+      if (!gameoverEl.hidden) return;   // nothing to pause once the game is over
+      if (!pausedEl.hidden) return;     // already paused
+      clearInterval(timerId);           // freeze the clock exactly where it is
+      timerId = null;
+      pausedEl.hidden = false;
+    }
+
+    // Play: hide the Paused overlay and restart the countdown from where it stopped
+    // (timeLeft was never changed, so no time is lost or added).
+    function resumeGame() {
+      pausedEl.hidden = true;
+      timerId = setInterval(tick, 1000);
+    }
+
     // Start (or restart) a whole game: reset the score and clock, hide Game Over,
     // deal the first word, and begin the countdown.
     function startGame() {
@@ -632,6 +688,7 @@
       timeLeft = GAME_TIME;
       queue = [];                            // force a fresh reshuffle of all 100 words
       gameoverEl.hidden = true;
+      pausedEl.hidden = true;                // clear any leftover Paused overlay
       updateScore();
       updateTimer();
       nextWord();
@@ -643,6 +700,8 @@
     nextBtn.addEventListener("click", nextWord);
     hintBtn.addEventListener("click", useHint);
     againBtn.addEventListener("click", startGame);   // "Try again" restarts everything
+    pauseBtn.addEventListener("click", pauseGame);   // top-right pause
+    playBtn.addEventListener("click", resumeGame);   // "Play" resumes
 
     // Also let the Space key trigger "Next word" (but not on the Game Over screen).
     // e.preventDefault() stops the page from also scrolling when Space is pressed.
@@ -650,6 +709,7 @@
       if (e.code === "Space" || e.key === " ") {
         e.preventDefault();
         if (!gameoverEl.hidden) return;   // ignore Space while Game Over is showing
+        if (!pausedEl.hidden) return;     // ignore Space while paused
         if (!answered) return;            // must answer before Space can advance
         nextWord();
       }
