@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- The text shown in the browser tab. -->
   <title>Word Guess — Emoji Edition</title>
-  <!-- build-marker: button-reshuffle -->  <!-- bump to force a fresh GitHub Pages rebuild -->
+  <!-- build-marker: visitor-counter -->  <!-- bump to force a fresh GitHub Pages rebuild -->
 
 
   <!-- Everything between <style> and </style> is CSS: it controls how the page LOOKS. -->
@@ -46,6 +46,21 @@
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       -webkit-font-smoothing: antialiased; /* slightly smoother text on some browsers */
     }
+
+    /* Subtle visitor counter at the very top: kept small and faded so it doesn't
+       compete with the game. Whatever the third-party script renders (image/text)
+       is shrunk to fit this strip. */
+    .visitor-counter {
+      flex: 0 0 auto;
+      text-align: center;
+      padding: 3px 0 0;
+      opacity: 0.4;
+      font-size: 0.6rem;
+      line-height: 1;
+      color: var(--muted);
+    }
+    .visitor-counter img { height: 11px; width: auto; vertical-align: middle; }
+    .visitor-counter a { color: var(--muted); text-decoration: none; }
 
     /* ===== TOP BAR: score on the left, app name centered, timer on the right ===== */
     .topbar {
@@ -310,6 +325,13 @@
 <!-- The <body> is the visible page. Elements with an id="" are the ones the
      JavaScript at the bottom finds and updates while you play. -->
 <body>
+  <!-- Subtle third-party visitor counter (free-counters.org), at the very top and
+       kept small/faded. Loaded synchronously so its output lands here. Only the
+       counter is included — no ad link and no extra tracker. -->
+  <div class="visitor-counter" aria-label="Visitor counter">
+    <script type="text/javascript" src="https://www.free-counters.org/count/jzhz"></script>
+  </div>
+
   <!-- Top bar: score on the left, app name centered, timer on the right.
        (The pause button moved down to the answer area.) -->
   <header class="topbar">
