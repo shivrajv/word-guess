@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- The text shown in the browser tab. -->
   <title>Word Guess — Emoji Edition</title>
-  <!-- build-marker: white-pause-card -->  <!-- bump to force a fresh GitHub Pages rebuild -->
+  <!-- build-marker: visitor-counter -->  <!-- bump to force a fresh GitHub Pages rebuild -->
 
 
   <!-- Everything between <style> and </style> is CSS: it controls how the page LOOKS. -->
@@ -47,7 +47,22 @@
       -webkit-font-smoothing: antialiased; /* slightly smoother text on some browsers */
     }
 
-    /* ===== TOP BAR: app name centered, with the score + timer HUD on the left ===== */
+    /* Subtle visitor counter at the very top: kept small and faded so it doesn't
+       compete with the game. Whatever the third-party script renders (image/text)
+       is shrunk to fit this strip. */
+    .visitor-counter {
+      flex: 0 0 auto;
+      text-align: center;
+      padding: 3px 0 0;
+      opacity: 0.4;
+      font-size: 0.6rem;
+      line-height: 1;
+      color: var(--muted);
+    }
+    .visitor-counter img { height: 11px; width: auto; vertical-align: middle; }
+    .visitor-counter a { color: var(--muted); text-decoration: none; }
+
+    /* ===== TOP BAR: score on the left, app name centered, timer on the right ===== */
     .topbar {
       flex: 0 0 auto;
       position: relative;              /* lets the HUD sit absolutely on the left */
@@ -60,41 +75,23 @@
       letter-spacing: -0.01em;
       color: var(--ink);
     }
-    /* The score + timer, pinned to the top-left corner. */
-    .hud {
+    /* The score (top-left) and the timer (top-right), slightly enlarged. */
+    .hud-stat {
       position: absolute;
-      left: 0.9rem;
-      top: 1.1rem;
-      display: flex;
-      gap: 0.6rem;
-      font-size: 0.95rem;
+      top: 1rem;
+      font-size: 1.15rem;                /* enlarged from 0.95rem */
       font-weight: 800;
     }
-    #score { color: var(--accent); }   /* points in purple */
+    .hud-left  { left: 0.95rem; }
+    .hud-right { right: 0.95rem; }
+    #score { color: var(--accent); }     /* points in purple */
     #timer { color: var(--ink); }
-    #timer.low { color: var(--bad); }  /* clock turns red in the last few seconds */
-    /* Pause button, pinned to the top-right corner: two bars drawn with CSS make
-       a crisp pause icon (no reliance on emoji rendering). */
-    .pause-btn {
-      position: absolute;
-      right: 0.9rem;
-      top: 1rem;
-      appearance: none;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      display: inline-flex;
-      gap: 4px;
-      padding: 0.35rem;
-    }
-    .pause-btn span {
-      display: block;
-      width: 5px;
-      height: 18px;
-      border-radius: 2px;
-      background: var(--ink);
-    }
-    .pause-btn:active { transform: scale(0.94); }   /* small press feedback */
+    #timer.low { color: var(--bad); }    /* clock turns red in the last few seconds */
+
+    /* The two-bar pause icon used inside the bottom "Pause" button. currentColor
+       makes the bars match the button's text color (and flip on hover). */
+    .pbars { display: inline-flex; gap: 3px; vertical-align: -2px; margin-right: 7px; }
+    .pbars span { display: block; width: 4px; height: 13px; border-radius: 2px; background: currentColor; }
 
     /* ===== BOTTOM AREA: the answer buttons + controls (kept low for thumb reach) ===== */
     .answer-zone {
@@ -328,17 +325,19 @@
 <!-- The <body> is the visible page. Elements with an id="" are the ones the
      JavaScript at the bottom finds and updates while you play. -->
 <body>
-  <!-- Top bar: the score + timer HUD sits at the top-left; the app name is centered. -->
+  <!-- Subtle third-party visitor counter (free-counters.org), at the very top and
+       kept small/faded. Loaded synchronously so its output lands here. Only the
+       counter is included — no ad link and no extra tracker. -->
+  <div class="visitor-counter" aria-label="Visitor counter">
+    <script type="text/javascript" src="https://www.free-counters.org/count/jzhz"></script>
+  </div>
+
+  <!-- Top bar: score on the left, app name centered, timer on the right.
+       (The pause button moved down to the answer area.) -->
   <header class="topbar">
-    <div class="hud">
-      <span id="score">★ 0</span>
-      <span id="timer">⏱ 30</span>
-    </div>
+    <span id="score" class="hud-stat hud-left">★ 0</span>
     <div class="appname">Word Guess</div>
-    <!-- Pause button (top-right). The two spans are the two bars of the pause icon. -->
-    <button class="pause-btn" id="pause" type="button" aria-label="Pause">
-      <span></span><span></span>
-    </button>
+    <span id="timer" class="hud-stat hud-right">⏱ 30</span>
   </header>
 
   <!-- PLAY AREA: everything below the top bar (the emoji stage + the answer
@@ -365,18 +364,20 @@
          and decides which one is correct. -->
     <div class="options" id="options"></div>
 
-    <!-- "Hint" button. Each tap reveals more emojis (up top) but costs 1 point.
-         The JavaScript hides it once all 15 emojis are shown. -->
+    <!-- Pause button (icon + the word "Pause"), where the Hint button used to be. -->
     <div class="more-wrap">
-      <button class="more-btn" id="hint" type="button">Hint</button>
+      <button class="more-btn" id="pause" type="button">
+        <span class="pbars"><span></span><span></span></span>Pause
+      </button>
     </div>
 
-    <!-- "Next word" button: jumps to a new random word. -->
+    <!-- Main action button: it says "Hint" (reveal more emojis, −1 point) until you
+         answer, then turns into "Next word". The JavaScript swaps its label. -->
     <div class="controls">
-      <button class="next-btn" id="next" type="button">Next word →</button>
+      <button class="next-btn" id="action" type="button">Hint</button>
     </div>
 
-    <p class="hint">Each “Hint” costs 1 point · Guess with no hints for the full 5 · “Next word” or Space to continue</p>
+    <p class="hint">“Hint” reveals more emojis (−1 point each) · after you answer it becomes “Next word” · Space to continue</p>
   </section>
 
     <!-- PAUSED card: one white rounded card covering the whole play area (the
@@ -515,8 +516,7 @@
     const optionsEl = document.getElementById("options");   // holds the 4 choice buttons
     const emojisEl  = document.getElementById("emojis");    // the emoji card
     const markEl    = document.getElementById("mark");      // the ✓ / ✗ marker
-    const nextBtn   = document.getElementById("next");      // the "Next word" button
-    const hintBtn   = document.getElementById("hint");      // the "Hint" button
+    const actionBtn = document.getElementById("action");    // main button: "Hint" -> "Next word"
     const scoreEl   = document.getElementById("score");     // the score in the top-left HUD
     const timerEl   = document.getElementById("timer");     // the countdown in the HUD
     const gameoverEl   = document.getElementById("gameover");    // the Game Over overlay
@@ -581,9 +581,20 @@
         emojisEl.appendChild(span);                       // put it inside the card
       });
 
-      // Show the "Hint" button while emojis remain; hide it once all 15 are shown.
-      const remaining = shuffled.length - revealed;
-      hintBtn.style.display = remaining > 0 ? "" : "none";
+      // Update the main button ("Hint" / "Next word").
+      updateActionButton();
+    }
+
+    // The single main button is "Hint" before you answer and "Next word" after.
+    // As "Hint" it greys out once every emoji has been revealed (no hints left).
+    function updateActionButton() {
+      if (answered) {
+        actionBtn.textContent = "Next word →";
+        actionBtn.disabled = false;
+      } else {
+        actionBtn.textContent = "Hint";
+        actionBtn.disabled = (shuffled.length - revealed) <= 0;
+      }
     }
 
     // Build the four answer choices for a given correct word. Returns an array of
@@ -636,8 +647,7 @@
         else if (idx === chosenIdx) btn.classList.add("wrong");   // and flag a wrong pick
       });
 
-      hintBtn.disabled = true;                     // no more hints after answering
-      nextBtn.disabled = false;                    // now "Next word" unlocks
+      updateActionButton();                        // the main button turns into "Next word"
     }
 
     // Start a fresh round: take the next word from the shuffled queue, build new
@@ -655,8 +665,7 @@
       wordPoints = MAX_POINTS;               // a fresh word is worth the full 5 points
       markEl.textContent = "";
       markEl.className = "mark";
-      hintBtn.disabled = false;
-      nextBtn.disabled = true;               // can't skip ahead — you must answer first
+      // The main button becomes "Hint" again via render() -> updateActionButton().
 
       shuffled = shuffle(WORDS[current].e);  // shuffle this word's 15 emojis
       revealed = START;                      // show just 3 to begin with
@@ -709,8 +718,8 @@
     // disabled state on pause and restore it on resume.
     let pauseSnapshot = null;
     function pausedControls() {
-      // the four options plus the Hint and Next buttons
-      return Array.prototype.slice.call(optionsEl.children).concat([hintBtn, nextBtn]);
+      // the four options plus the main Hint/Next button
+      return Array.prototype.slice.call(optionsEl.children).concat([actionBtn]);
     }
     function freezeControls() {
       const controls = pausedControls();
@@ -760,10 +769,13 @@
 
     // ===== HOOK THE BUTTONS UP =====
     // addEventListener("click", fn) means "run function fn whenever this is clicked".
-    nextBtn.addEventListener("click", nextWord);
-    hintBtn.addEventListener("click", useHint);
+    // The main button does one of two things depending on whether you've answered.
+    actionBtn.addEventListener("click", function () {
+      if (answered) nextWord();   // after answering it's "Next word"
+      else useHint();             // before answering it's "Hint"
+    });
     againBtn.addEventListener("click", startGame);   // "Try again" restarts everything
-    pauseBtn.addEventListener("click", pauseGame);   // top-right pause
+    pauseBtn.addEventListener("click", pauseGame);   // the "Pause" button (now in the answer area)
     playBtn.addEventListener("click", resumeGame);   // "Play" resumes
 
     // Also let the Space key trigger "Next word" (but not on the Game Over screen).
