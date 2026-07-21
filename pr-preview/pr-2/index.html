@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- The text shown in the browser tab. -->
   <title>Word Guess — Emoji Edition</title>
-  <!-- build-marker: visitor-counter -->  <!-- bump to force a fresh GitHub Pages rebuild -->
+  <!-- build-marker: tutorial-overlay -->  <!-- bump to force a fresh GitHub Pages rebuild -->
 
 
   <!-- Everything between <style> and </style> is CSS: it controls how the page LOOKS. -->
@@ -320,6 +320,57 @@
     }
     .pause-panel[hidden] { display: none; }
     .pause-panel .go-title { margin: 0; }   /* "Paused" heading, reusing go-title */
+
+    /* ===== TUTORIAL overlay: shown once when the page loads. A see-through dim
+       layer blocks the game, and a small labelled arrow points at each part.
+       "Got it" dismisses it and starts the clock. ===== */
+    .tutorial {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 18, 30, 0.55);   /* transparent dim that blocks everything */
+      z-index: 60;
+    }
+    .tutorial[hidden] { display: none; }
+    /* Each labelled callout. JS positions it next to its target. */
+    .callout {
+      position: fixed;
+      z-index: 61;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-size: 0.72rem;
+      font-weight: 700;
+      line-height: 1.2;
+      padding: 0.4rem 0.6rem;
+      border-radius: 0.5rem;
+      max-width: 42vw;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+      text-align: center;
+    }
+    /* The little triangle that points from a callout to its target. */
+    .callout-arrow { position: absolute; width: 0; height: 0; border: 7px solid transparent; }
+    .dir-below .callout-arrow { bottom: 100%; border-bottom-color: var(--accent); transform: translateX(-50%); }
+    .dir-above .callout-arrow { top: 100%;    border-top-color: var(--accent);    transform: translateX(-50%); }
+    .dir-left  .callout-arrow { left: 100%;   border-left-color: var(--accent);   transform: translateY(-50%); }
+    .dir-right .callout-arrow { right: 100%;  border-right-color: var(--accent);  transform: translateY(-50%); }
+    /* The "Got it" button that starts the game. */
+    .tut-start {
+      position: fixed;
+      left: 50%;
+      top: 45%;
+      transform: translate(-50%, -50%);
+      z-index: 62;
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      background: #fff;
+      color: var(--accent);
+      font-size: 1rem;
+      font-weight: 800;
+      padding: 0.9rem 1.9rem;
+      border-radius: 999px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+    }
+    .tut-start:active { transform: translate(-50%, -50%) scale(0.98); }
   </style>
 </head>
 <!-- The <body> is the visible page. Elements with an id="" are the ones the
@@ -396,6 +447,12 @@
       <div class="go-score">You scored <strong id="finalScore">0</strong></div>
       <button class="next-btn" id="again" type="button">Try again</button>
     </div>
+  </div>
+
+  <!-- TUTORIAL overlay: shown once when the page loads. The JavaScript adds a
+       labelled arrow pointing at each part of the game; "Got it" starts play. -->
+  <div class="tutorial" id="tutorial" hidden>
+    <button class="tut-start" id="tutStart" type="button">Got it — let’s play</button>
   </div>
 
   <!-- Everything between <script> and </script> is JavaScript: it controls how
@@ -522,9 +579,11 @@
     const gameoverEl   = document.getElementById("gameover");    // the Game Over overlay
     const finalScoreEl = document.getElementById("finalScore");  // final score shown inside it
     const againBtn     = document.getElementById("again");       // the "Try again" button
-    const pauseBtn     = document.getElementById("pause");       // top-right pause button
+    const pauseBtn     = document.getElementById("pause");       // the "Pause" button (in the answer area)
     const pausedEl     = document.getElementById("paused");      // the Paused overlay
     const playBtn      = document.getElementById("play");        // the "Play" button on it
+    const tutorialEl   = document.getElementById("tutorial");    // the first-run tutorial overlay
+    const tutStartBtn  = document.getElementById("tutStart");    // its "Got it" button
 
     // ===== SETTINGS (change these to tune the game) =====
     const START      = 3;    // how many emojis show when a word first appears
@@ -751,10 +810,10 @@
       timerId = setInterval(tick, 1000);
     }
 
-    // Start (or restart) a whole game: reset the score and clock, hide Game Over,
-    // deal the first word, and begin the countdown.
-    function startGame() {
+    // Set up a fresh board (score, clock, first word) WITHOUT starting the timer.
+    function resetBoard() {
       if (timerId) clearInterval(timerId);   // stop any previous countdown
+      timerId = null;
       score = 0;
       timeLeft = GAME_TIME;
       queue = [];                            // force a fresh reshuffle of all 100 words
@@ -764,7 +823,77 @@
       updateScore();
       updateTimer();
       nextWord();
+    }
+
+    // Start the countdown ticking.
+    function beginTimer() {
+      if (timerId) clearInterval(timerId);
       timerId = setInterval(tick, 1000);     // run tick() every 1000ms (1 second)
+    }
+
+    // "Try again" restarts a whole game immediately (no tutorial the second time).
+    function startGame() {
+      resetBoard();
+      beginTimer();
+    }
+
+    // ===== TUTORIAL (shown once, on page load) =====
+    // Each entry: which element to point at, which side the callout sits on, and
+    // the label text. (No callout for the visitor counter, on purpose.)
+    const TUTORIAL = [
+      { target: "#score",   dir: "below", text: "Your points" },
+      { target: "#timer",   dir: "below", text: "Time left" },
+      { target: "#emojis",  dir: "below", text: "Emoji clues" },
+      { target: "#options", dir: "above", text: "Tap the matching word" },
+      { target: "#pause",   dir: "left",  text: "Pause" },
+      { target: "#action",  dir: "right", text: "Hint (−1 pt) — becomes “Next word” after you answer" }
+    ];
+    // Build one callout (label + arrow) for each entry.
+    TUTORIAL.forEach(function (cfg) {
+      const el = document.createElement("div");
+      el.className = "callout";
+      const arrow = document.createElement("span");
+      arrow.className = "callout-arrow";
+      el.appendChild(arrow);
+      el.appendChild(document.createTextNode(cfg.text));
+      tutorialEl.appendChild(el);
+      cfg.el = el;
+      cfg.arrow = arrow;
+    });
+
+    // Position one callout next to its target, clamped to stay on screen, with the
+    // arrow pointing back at the target's center.
+    function placeCallout(cfg) {
+      const target = document.querySelector(cfg.target);
+      if (!target) return;
+      const el = cfg.el, arrow = cfg.arrow, r = target.getBoundingClientRect();
+      const vw = window.innerWidth, vh = window.innerHeight, gap = 12, pad = 8;
+      el.className = "callout dir-" + cfg.dir;
+      el.style.left = "0px"; el.style.top = "0px";      // reset so we can measure size
+      const w = el.offsetWidth, h = el.offsetHeight;
+      if (cfg.dir === "below" || cfg.dir === "above") {
+        const cx = r.left + r.width / 2;
+        const left = Math.max(pad, Math.min(cx - w / 2, vw - pad - w));
+        const top = cfg.dir === "below" ? r.bottom + gap : r.top - gap - h;
+        el.style.left = left + "px"; el.style.top = top + "px";
+        arrow.style.left = Math.max(10, Math.min(cx - left, w - 10)) + "px";
+      } else {
+        const cy = r.top + r.height / 2;
+        const top = Math.max(pad, Math.min(cy - h / 2, vh - pad - h));
+        const left = cfg.dir === "left" ? r.left - gap - w : r.right + gap;
+        el.style.left = Math.max(pad, Math.min(left, vw - pad - w)) + "px"; el.style.top = top + "px";
+        arrow.style.top = Math.max(10, Math.min(cy - top, h - 10)) + "px";
+      }
+    }
+    function positionCallouts() { TUTORIAL.forEach(placeCallout); }
+
+    function showTutorial() {
+      tutorialEl.hidden = false;
+      positionCallouts();
+    }
+    function dismissTutorial() {
+      tutorialEl.hidden = true;
+      beginTimer();                          // the clock only starts now
     }
 
     // ===== HOOK THE BUTTONS UP =====
@@ -777,12 +906,17 @@
     againBtn.addEventListener("click", startGame);   // "Try again" restarts everything
     pauseBtn.addEventListener("click", pauseGame);   // the "Pause" button (now in the answer area)
     playBtn.addEventListener("click", resumeGame);   // "Play" resumes
+    tutStartBtn.addEventListener("click", dismissTutorial);   // "Got it" starts the game
+    window.addEventListener("resize", function () {  // keep the callouts aligned
+      if (!tutorialEl.hidden) positionCallouts();
+    });
 
     // Also let the Space key trigger "Next word" (but not on the Game Over screen).
     // e.preventDefault() stops the page from also scrolling when Space is pressed.
     document.addEventListener("keydown", function (e) {
       if (e.code === "Space" || e.key === " ") {
         e.preventDefault();
+        if (!tutorialEl.hidden) return;   // ignore Space during the tutorial
         if (!gameoverEl.hidden) return;   // ignore Space while Game Over is showing
         if (!pausedEl.hidden) return;     // ignore Space while paused
         if (!answered) return;            // must answer before Space can advance
@@ -790,9 +924,11 @@
       }
     });
 
-    // ===== START THE GAME =====
-    // Kick off the first game when the page finishes loading.
-    startGame();
+    // ===== START =====
+    // On load, set up the board and show the one-time tutorial. The countdown
+    // starts only when the player taps "Got it".
+    resetBoard();
+    showTutorial();
   </script>
 </body>
 </html>

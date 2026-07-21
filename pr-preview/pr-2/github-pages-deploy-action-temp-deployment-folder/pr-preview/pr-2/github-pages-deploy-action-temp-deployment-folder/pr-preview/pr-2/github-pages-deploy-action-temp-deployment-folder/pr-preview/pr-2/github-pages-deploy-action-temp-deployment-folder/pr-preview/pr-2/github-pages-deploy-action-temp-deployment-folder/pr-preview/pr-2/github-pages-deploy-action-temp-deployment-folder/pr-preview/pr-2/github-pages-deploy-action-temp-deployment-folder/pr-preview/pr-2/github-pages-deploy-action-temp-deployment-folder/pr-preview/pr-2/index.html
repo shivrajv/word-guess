@@ -72,10 +72,10 @@
     #timer { color: var(--ink); }
     #timer.low { color: var(--bad); }  /* clock turns red in the last few seconds */
 
-    /* ===== TOP AREA: the four answer choices ===== */
-    .options-zone {
+    /* ===== BOTTOM AREA: the answer buttons + controls (kept low for thumb reach) ===== */
+    .answer-zone {
       flex: 0 0 auto;                 /* take only as much height as its content needs */
-      padding: 1rem 1.25rem 1rem;
+      padding: 0.5rem 1.25rem 2rem;
       text-align: center;
     }
     /* Small uppercase label above the choices ("WHICH WORD..."). */
@@ -151,10 +151,10 @@
       100% { transform: scale(1);   opacity: 1; }
     }
 
-    /* ===== BOTTOM AREA: the emoji clue card and the buttons ===== */
-    .emoji-zone {
+    /* ===== TOP AREA: the emoji clue card ===== */
+    .clue-zone {
       flex: 0 0 auto;
-      padding: 1.5rem 1.25rem 2.5rem;
+      padding: 1.5rem 1.25rem 0.5rem;
     }
     /* The white rounded card that holds the emoji clues. It's a flex row that
        wraps onto more lines (flex-wrap) once there are too many emojis to fit. */
@@ -185,7 +185,7 @@
        layout doesn't jump when the button hides itself once all 15 are shown. */
     .more-wrap {
       max-width: 32rem;
-      margin: 0 auto 1.25rem;
+      margin: 1.25rem auto 1.25rem;    /* space above so it isn't touching the word buttons */
       display: flex;
       justify-content: center;
       min-height: 2.4rem;
@@ -227,8 +227,9 @@
       box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
       transition: transform 0.08s ease, box-shadow 0.15s ease;
     }
-    .next-btn:hover { box-shadow: 0 10px 26px rgba(99, 102, 241, 0.45); } /* lift on hover */
-    .next-btn:active { transform: translateY(1px) scale(0.99); }         /* press-down effect */
+    .next-btn:not(:disabled):hover  { box-shadow: 0 10px 26px rgba(99, 102, 241, 0.45); } /* lift on hover */
+    .next-btn:not(:disabled):active { transform: translateY(1px) scale(0.99); }           /* press-down effect */
+    .next-btn:disabled { opacity: 0.4; box-shadow: none; cursor: default; }               /* off until you answer */
     /* Small grey helper text under the buttons. */
     .hint {
       text-align: center;
@@ -276,23 +277,27 @@
     <div class="appname">Word Guess</div>
   </header>
 
-  <!-- The four answer choices. The JavaScript creates the four buttons inside
-       #options and decides which one is correct. -->
-  <section class="options-zone">
-    <div class="kicker">Which word do these emojis mean?</div>
-    <div class="options" id="options"></div>
+  <!-- TOP: the emoji clues. Moved up here (they used to be at the bottom) so they
+       stay out of the way of your thumb on a phone. -->
+  <section class="clue-zone">
+    <!-- #emojis is filled by the JavaScript with one <span> per revealed emoji. -->
+    <div class="emoji-card size-lg" id="emojis"></div>
   </section>
 
   <!-- MIDDLE: the ✓ / ✗ marker. Empty until you answer; the JavaScript fills it. -->
   <div class="mark-zone"><span class="mark" id="mark"></span></div>
 
-  <!-- BOTTOM: the emoji clues and the two buttons. -->
-  <section class="emoji-zone">
-    <!-- #emojis is filled by the JavaScript with one <span> per revealed emoji. -->
-    <div class="emoji-card size-lg" id="emojis"></div>
+  <!-- BOTTOM: the word buttons + controls. Moved down here (they used to be at the
+       top) so they sit within one-handed thumb reach. -->
+  <section class="answer-zone">
+    <div class="kicker">Which word do these emojis mean?</div>
 
-    <!-- "Hint" button. Each tap reveals more emojis but costs 1 point. The
-         JavaScript hides it once all 15 emojis are shown. -->
+    <!-- The four answer choices. The JavaScript fills #options with the buttons
+         and decides which one is correct. -->
+    <div class="options" id="options"></div>
+
+    <!-- "Hint" button. Each tap reveals more emojis (up top) but costs 1 point.
+         The JavaScript hides it once all 15 emojis are shown. -->
     <div class="more-wrap">
       <button class="more-btn" id="hint" type="button">Hint</button>
     </div>
@@ -334,7 +339,7 @@
       { w: "Ocean",       e: ["🌊","🐳","🐬","🐠","🦈","🐙","🏝️","⛵","🐚","🪸","🧜‍♀️","🌅","🦀","🐋","⚓"] },
       { w: "Mountain",    e: ["⛰️","🏔️","🥾","🧗","🏕️","🌲","🦅","🎿","⛷️","🏂","🌄","🧭","🏞️","🐐","❄️"] },
       { w: "Forest",      e: ["🌲","🌳","🍄","🦌","🦉","🐻","🐿️","🍂","🌿","🏕️","🪵","🐺","🦊","🌱","🥾"] },
-      { w: "Volcano",     e: ["🌋","🔥","💥","🌡️","🏔️","💨","🪨","😱","🧨","⛰️","🦖","🌫️","🚁","🏝️","🔴"] },
+      { w: "Volcano",     e: ["🌋","🔥","💥","🌡️","🏔️","💨","🪨","😱","🧨","⛰️","🦖","🌫️","♨️","🏝️","🔴"] },
       { w: "Moon",        e: ["🌙","🌕","🌑","🚀","👨‍🚀","⭐","🌌","🐺","🦉","🌜","🌛","🔭","🌠","🛸","🌚"] },
       { w: "Star",        e: ["⭐","🌟","✨","🌠","🌌","🔭","💫","🌃","🎇","🪐","🌙","🥇","🎬","🤩","🎆"] },
       { w: "Dog",         e: ["🐕","🐶","🦴","🐾","🎾","🦮","🐕‍🦺","🏠","🍖","😃","🐩","🚶","🥏","🐺","❤️"] },
@@ -350,13 +355,13 @@
       { w: "Frog",        e: ["🐸","🌿","🪷","💚","🦟","🌧️","🪰","🍄","🌳","🌊","👑","🪴","🌱","🐍","🟢"] },
       { w: "Penguin",     e: ["🐧","❄️","🧊","🐟","🏔️","⛄","🥶","🌨️","🇦🇶","🏊","🥚","🖤","🤵","🌊","🐣"] },
       { w: "Dinosaur",    e: ["🦕","🦖","🌋","🥚","🦴","🌿","🌴","💥","🐊","🏛️","🔬","🪨","☄️","🌡️","🥩"] },
-      { w: "Dragon",      e: ["🐉","🔥","🐲","🏰","🗡️","👑","💎","🀄","🧙","🥚","🏮","🐍","🦖","✨","🛡️"] },
+      { w: "Dragon",      e: ["🐉","🔥","🐲","🏰","🗡️","👑","💎","🏯","🧙","🥚","🏮","🐍","🦖","✨","🛡️"] },
       { w: "Unicorn",     e: ["🦄","🌈","✨","💖","🦋","🌸","👑","🍭","🌟","💫","🎠","🪄","🩷","☁️","🦓"] },
       { w: "Pizza",       e: ["🍕","🧀","🍅","🍄","🔥","🇮🇹","🥤","🫒","🧑‍🍳","📦","🍽️","🌶️","🥓","🧅","🫓"] },
       { w: "Burger",      e: ["🍔","🍟","🥤","🧀","🥓","🥬","🍅","🧅","🔥","🐄","🍞","🥒","😋","🍴","🥩"] },
       { w: "Sushi",       e: ["🍣","🍙","🐟","🍚","🥢","🇯🇵","🦐","🥑","🌊","🐙","🍶","🥒","🍤","🧑‍🍳","🐠"] },
       { w: "Cake",        e: ["🎂","🍰","🧁","🍓","🕯️","🎉","🎈","🍫","🎊","🥳","🍦","😋","🍒","🎁","🫐"] },
-      { w: "Coffee",      e: ["☕","🫘","🥛","🍩","😴","🌅","📚","💻","🔥","🥐","🇧🇷","🤎","🍪","🧑‍💻","⏰"] },
+      { w: "Coffee",      e: ["☕","🫘","🥛","🍩","😴","🌅","📚","💻","🔥","🥐","🥱","🤎","🍪","🧑‍💻","⏰"] },
       { w: "Ice Cream",   e: ["🍦","🍨","🍧","🍓","🍫","🌈","😋","🥶","🧇","🍒","🌞","🥄","🥛","🏖️","🧁"] },
       { w: "Taco",        e: ["🌮","🌯","🌶️","🧀","🥑","🇲🇽","🍅","🥩","🌽","🧅","🫓","🥬","🔥","😋","🍋"] },
       { w: "Breakfast",   e: ["🍳","🥓","🥞","☕","🥐","🧇","🍞","🥚","🥯","🍊","🥛","🌅","🥣","🧈","🍌"] },
@@ -411,7 +416,7 @@
       { w: "Rocket",      e: ["🚀","🌌","🔥","🪐","👨‍🚀","🌠","🛰️","💥","🌍","⭐","🧑‍🚀","⏱️","🛸","🌑","🎇"] },
       { w: "Phone",       e: ["📱","📲","🔋","📶","💬","📞","🤳","🎧","🔔","📸","⌨️","🔌","📩","🎮","👆"] },
       { w: "Computer",    e: ["💻","🖥️","⌨️","🖱️","🧑‍💻","🖨️","💾","📀","🔌","📊","🌐","🖲️","🕹️","📁","💡"] },
-      { w: "Camera",      e: ["📷","📸","🎥","🖼️","🎞️","📹","🤳","🌄","🎬","🏞️","👁️","🎦","🔍","🌅","📀"] },
+      { w: "Camera",      e: ["📷","📸","🎥","🖼️","🎞️","📹","🤳","🌄","🎬","🏞️","👁️","🎦","🔍","🌅","🔴"] },
       { w: "Clock",       e: ["🕐","⏰","⏱️","⌚","🕰️","⏲️","🔔","🌅","📅","🛎️","🕛","⏳","🧭","🌙","🕧"] },
       { w: "Book",        e: ["📖","📚","🔖","✏️","🤓","📕","📗","📘","📝","🧠","🕯️","📜","✒️","📙","👓"] },
       { w: "Money",       e: ["💰","💵","💴","💶","💷","🪙","💳","🏦","🤑","💸","📈","🏧","💎","🧾","🤝"] },
@@ -552,6 +557,7 @@
       });
 
       hintBtn.disabled = true;                     // no more hints after answering
+      nextBtn.disabled = false;                    // now "Next word" unlocks
     }
 
     // Start a fresh round: take the next word from the shuffled queue, build new
@@ -570,6 +576,7 @@
       markEl.textContent = "";
       markEl.className = "mark";
       hintBtn.disabled = false;
+      nextBtn.disabled = true;               // can't skip ahead — you must answer first
 
       shuffled = shuffle(WORDS[current].e);  // shuffle this word's 15 emojis
       revealed = START;                      // show just 3 to begin with
@@ -643,6 +650,7 @@
       if (e.code === "Space" || e.key === " ") {
         e.preventDefault();
         if (!gameoverEl.hidden) return;   // ignore Space while Game Over is showing
+        if (!answered) return;            // must answer before Space can advance
         nextWord();
       }
     });
