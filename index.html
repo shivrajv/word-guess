@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- The text shown in the browser tab. -->
   <title>Word Guess — Emoji Edition</title>
-  <!-- build-marker: tutorial-overlay -->  <!-- bump to force a fresh GitHub Pages rebuild -->
+  <!-- build-marker: no-checkmark -->  <!-- bump to force a fresh GitHub Pages rebuild -->
 
 
   <!-- Everything between <style> and </style> is CSS: it controls how the page LOOKS. -->
@@ -140,36 +140,12 @@
     .option:disabled { cursor: default; opacity: 0.5; }
     .option.correct:disabled, .option.wrong:disabled { opacity: 1; } /* keep colored ones bold */
 
-    /* ===== MIDDLE AREA: the correct/incorrect marker =====
-       This flexible zone sits between the choices (top) and the emojis (bottom).
-       flex: 1 1 auto makes it grow to fill leftover space and centers the mark. */
+    /* ===== MIDDLE AREA: flexible spacer between the emojis (top) and the answer
+       buttons (bottom). The ✓/✗ badge was removed — right vs wrong now shows only
+       as the green/red coloring on the answer buttons. ===== */
     .mark-zone {
       flex: 1 1 auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       min-height: 4.5rem;
-    }
-    /* The ✓ / ✗ badge: a solid colored circle with a white symbol, so it's easy
-       to read. It's hidden until you answer, when the JavaScript adds a color
-       class (.correct or .wrong) that reveals and colors it. */
-    .mark {
-      display: none;                  /* hidden until a color class is added */
-      width:  clamp(3.5rem, 16vw, 5rem);
-      height: clamp(3.5rem, 16vw, 5rem);
-      border-radius: 50%;             /* a circle */
-      align-items: center;
-      justify-content: center;
-      font-size: clamp(2rem, 9vw, 3rem);
-      font-weight: 800;
-      color: #fff;                    /* white symbol on the colored circle */
-      box-shadow: var(--shadow);
-    }
-    .mark.correct { display: flex; background: var(--good); animation: pop 0.25s ease; }
-    .mark.wrong   { display: flex; background: var(--bad);  animation: pop 0.25s ease; }
-    @keyframes pop {
-      0%   { transform: scale(0.4); opacity: 0; }
-      100% { transform: scale(1);   opacity: 1; }
     }
 
     /* The play area is everything below the top bar (the emoji stage + the answer
@@ -403,7 +379,8 @@
       </section>
 
       <!-- MIDDLE: the ✓ / ✗ marker. Empty until you answer; the JavaScript fills it. -->
-      <div class="mark-zone"><span class="mark" id="mark"></span></div>
+      <!-- MIDDLE: flexible spacer between the emojis and the answer buttons. -->
+      <div class="mark-zone"></div>
     </div>
 
   <!-- BOTTOM: the word buttons + controls. Moved down here (they used to be at the
@@ -572,7 +549,6 @@
     // above, so we can read or change it from JavaScript.
     const optionsEl = document.getElementById("options");   // holds the 4 choice buttons
     const emojisEl  = document.getElementById("emojis");    // the emoji card
-    const markEl    = document.getElementById("mark");      // the ✓ / ✗ marker
     const actionBtn = document.getElementById("action");    // main button: "Hint" -> "Next word"
     const scoreEl   = document.getElementById("score");     // the score in the top-left HUD
     const timerEl   = document.getElementById("timer");     // the countdown in the HUD
@@ -688,8 +664,6 @@
       answered = true;
 
       const correct = (chosenIdx === current);
-      markEl.textContent = correct ? "✓" : "✗";
-      markEl.className = "mark " + (correct ? "correct" : "wrong");
 
       // Scoring: a correct answer earns the word's current value (5 minus the
       // hints used); a wrong answer earns nothing.
@@ -722,8 +696,6 @@
 
       answered = false;
       wordPoints = MAX_POINTS;               // a fresh word is worth the full 5 points
-      markEl.textContent = "";
-      markEl.className = "mark";
       // The main button becomes "Hint" again via render() -> updateActionButton().
 
       shuffled = shuffle(WORDS[current].e);  // shuffle this word's 15 emojis
