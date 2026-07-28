@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- The text shown in the browser tab. -->
   <title>Word Guess — Emoji Edition</title>
-  <!-- build-marker: no-checkmark -->  <!-- bump to force a fresh GitHub Pages rebuild -->
+  <!-- build-marker: gotit-middle -->  <!-- bump to force a fresh GitHub Pages rebuild -->
 
 
   <!-- Everything between <style> and </style> is CSS: it controls how the page LOOKS. -->
@@ -332,7 +332,7 @@
     .tut-start {
       position: fixed;
       left: 50%;
-      top: 45%;
+      top: 40%;                       /* centered in the middle, clear of the callouts */
       transform: translate(-50%, -50%);
       z-index: 62;
       appearance: none;
@@ -815,10 +815,10 @@
     const TUTORIAL = [
       { target: "#score",   dir: "below", text: "Your points" },
       { target: "#timer",   dir: "below", text: "Time left" },
-      { target: "#emojis",  dir: "below", text: "Emoji clues" },
+      { target: "#emojis",  dir: "above", text: "Emoji clues" },
       { target: "#options", dir: "above", text: "Tap the matching word" },
-      { target: "#pause",   dir: "left",  text: "Pause" },
-      { target: "#action",  dir: "right", text: "Hint (−1 pt) — becomes “Next word” after you answer" }
+      { target: "#pause",   dir: "above", text: "Pause" },
+      { target: "#action",  dir: "below", text: "Hint (−1 pt) — becomes “Next word” after you answer" }
     ];
     // Build one callout (label + arrow) for each entry.
     TUTORIAL.forEach(function (cfg) {
