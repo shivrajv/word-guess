@@ -8,6 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- The text shown in the browser tab. -->
   <title>Word Guess — Emoji Edition</title>
+  <!-- build-marker: white-pause-card -->  <!-- bump to force a fresh GitHub Pages rebuild -->
+
 
   <!-- Everything between <style> and </style> is CSS: it controls how the page LOOKS. -->
   <style>
@@ -173,10 +175,17 @@
       100% { transform: scale(1);   opacity: 1; }
     }
 
-    /* The stage holds the emoji clues + the marker, and is the exact region the
-       Paused panel covers. position: relative lets that panel sit inside it. */
-    .stage {
+    /* The play area is everything below the top bar (the emoji stage + the answer
+       buttons). position: relative lets the Paused card cover this whole area. */
+    .play-area {
       position: relative;
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    /* The stage holds the emoji clues + the marker. */
+    .stage {
       flex: 1 1 auto;
       display: flex;
       flex-direction: column;
@@ -296,18 +305,24 @@
     .go-score { font-size: 1.1rem; color: var(--muted); margin-bottom: 1.75rem; }
     .go-score strong { color: var(--accent); font-size: 1.4rem; }
 
-    /* ===== PAUSED panel: an opaque cover over the stage so the emojis are fully
-       hidden while paused. The top bar and the answer buttons stay visible. ===== */
+    /* ===== PAUSED card: one white rounded card that covers the whole play area
+       (the emojis AND the word buttons) while paused. No dark box — just the card.
+       Only its "Play" button is usable; the "Word Guess" bar stays visible above. */
     .pause-panel {
       position: absolute;
-      inset: 0;                        /* fill the whole stage */
-      background: #0f121e;             /* solid, so the emojis underneath vanish */
+      inset: 0.5rem;                   /* fill the play area, leaving a small margin */
+      background: var(--card);         /* white — this IS the card, no dark box */
+      border-radius: 1.5rem;
+      box-shadow: var(--shadow);
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 1.25rem;
       z-index: 5;
     }
     .pause-panel[hidden] { display: none; }
+    .pause-panel .go-title { margin: 0; }   /* "Paused" heading, reusing go-title */
   </style>
 </head>
 <!-- The <body> is the visible page. Elements with an id="" are the ones the
@@ -326,28 +341,20 @@
     </button>
   </header>
 
-  <!-- STAGE: the emoji clues + the ✓/✗ marker. The Paused panel lives inside here
-       and covers exactly this area, so pausing hides the emojis while the top bar
-       and the answer buttons below stay visible. -->
-  <div class="stage">
-    <!-- TOP: the emoji clues (moved up so they're out of the way of your thumb). -->
-    <section class="clue-zone">
-      <!-- #emojis is filled by the JavaScript with one <span> per revealed emoji. -->
-      <div class="emoji-card size-lg" id="emojis"></div>
-    </section>
+  <!-- PLAY AREA: everything below the top bar (the emoji stage + the answer
+       buttons). The Paused card covers all of it while paused. -->
+  <div class="play-area">
+    <!-- STAGE: the emoji clues + the ✓/✗ marker. -->
+    <div class="stage">
+      <!-- TOP: the emoji clues (moved up so they're out of the way of your thumb). -->
+      <section class="clue-zone">
+        <!-- #emojis is filled by the JavaScript with one <span> per revealed emoji. -->
+        <div class="emoji-card size-lg" id="emojis"></div>
+      </section>
 
-    <!-- MIDDLE: the ✓ / ✗ marker. Empty until you answer; the JavaScript fills it. -->
-    <div class="mark-zone"><span class="mark" id="mark"></span></div>
-
-    <!-- PAUSED panel: covers just this stage (the emojis) so you can't study them
-         while the clock is stopped. Hidden until you tap pause. -->
-    <div class="pause-panel" id="paused" hidden>
-      <div class="go-card">
-        <div class="go-title">Paused</div>
-        <button class="next-btn" id="play" type="button">Play</button>
-      </div>
+      <!-- MIDDLE: the ✓ / ✗ marker. Empty until you answer; the JavaScript fills it. -->
+      <div class="mark-zone"><span class="mark" id="mark"></span></div>
     </div>
-  </div>
 
   <!-- BOTTOM: the word buttons + controls. Moved down here (they used to be at the
        top) so they sit within one-handed thumb reach. -->
@@ -371,6 +378,14 @@
 
     <p class="hint">Each “Hint” costs 1 point · Guess with no hints for the full 5 · “Next word” or Space to continue</p>
   </section>
+
+    <!-- PAUSED card: one white rounded card covering the whole play area (the
+         emojis AND the word buttons). Only "Play" is usable. Hidden until pause. -->
+    <div class="pause-panel" id="paused" hidden>
+      <div class="go-title">Paused</div>
+      <button class="next-btn" id="play" type="button">Play</button>
+    </div>
+  </div>
 
   <!-- GAME OVER screen. Hidden until the timer runs out, then the JavaScript
        removes the "hidden" attribute to show it. -->
