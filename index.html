@@ -13,7 +13,7 @@
   <meta http-equiv="Expires" content="0" />
   <!-- The text shown in the browser tab. -->
   <title>Word Guess — Emoji Edition</title>
-  <!-- build-marker: transparent-callouts -->  <!-- bump to force a fresh GitHub Pages rebuild -->
+  <!-- build-marker: howto-autocenter -->  <!-- bump to force a fresh GitHub Pages rebuild -->
 
 
   <!-- Everything between <style> and </style> is CSS: it controls how the page LOOKS. -->
@@ -342,8 +342,8 @@
     .tut-howto {
       position: fixed;
       left: 50%;
-      top: 42%;                       /* centered in the empty space now that the buttons moved down */
-      transform: translate(-50%, -50%);
+      top: 42%;                       /* initial fallback; JS centers it in the real gap */
+      transform: translateX(-50%);
       z-index: 62;
       width: min(85vw, 21rem);
       text-align: center;
@@ -868,9 +868,25 @@
     }
     function positionCallouts() { TUTORIAL.forEach(placeCallout); }
 
+    // Center the "How to play" panel in the gap between the emoji card and the
+    // "Tap the matching word" callout, so it never overlaps either — on any screen
+    // height. Clamped so it stays fully inside that gap.
+    function positionHowto() {
+      const howto = document.querySelector(".tut-howto");
+      const emojiBottom = document.querySelector("#emojis").getBoundingClientRect().bottom;
+      const optCfg = TUTORIAL.find(function (c) { return c.target === "#options"; });
+      const optTop = (optCfg && optCfg.el) ? optCfg.el.getBoundingClientRect().top : window.innerHeight;
+      const gapTop = emojiBottom + 10, gapBottom = optTop - 10;
+      const h = howto.offsetHeight;
+      let top = (gapTop + gapBottom) / 2 - h / 2;            // centered in the gap
+      top = Math.max(gapTop, Math.min(top, gapBottom - h));  // clamp so it can't overlap
+      howto.style.top = top + "px";
+    }
+
     function showTutorial() {
       tutorialEl.hidden = false;
       positionCallouts();
+      positionHowto();      // after the callouts, so the options callout rect is known
     }
     function dismissTutorial() {
       tutorialEl.hidden = true;
@@ -888,8 +904,8 @@
     pauseBtn.addEventListener("click", pauseGame);   // the "Pause" button (now in the answer area)
     playBtn.addEventListener("click", resumeGame);   // "Play" resumes
     tutorialEl.addEventListener("click", dismissTutorial);    // tap anywhere on the overlay starts the game
-    window.addEventListener("resize", function () {  // keep the callouts aligned
-      if (!tutorialEl.hidden) positionCallouts();
+    window.addEventListener("resize", function () {  // keep the callouts + panel aligned
+      if (!tutorialEl.hidden) { positionCallouts(); positionHowto(); }
     });
 
     // Also let the Space key trigger "Next word" (but not on the Game Over screen).
