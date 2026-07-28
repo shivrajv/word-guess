@@ -13,7 +13,7 @@
   <meta http-equiv="Expires" content="0" />
   <!-- The text shown in the browser tab. -->
   <title>Word Guess — Emoji Edition</title>
-  <!-- build-marker: blue-howto-moved -->  <!-- bump to force a fresh GitHub Pages rebuild -->
+  <!-- build-marker: transparent-callouts -->  <!-- bump to force a fresh GitHub Pages rebuild -->
 
 
   <!-- Everything between <style> and </style> is CSS: it controls how the page LOOKS. -->
@@ -27,6 +27,7 @@
       --muted: #7b8494;      /* dimmed text (hints, counter) */
       --accent: #6366f1;     /* brand purple used on buttons */
       --accent-ink: #ffffff; /* text color on top of the purple */
+      --tutpanel: rgba(15, 18, 30, 0.55); /* transparent black for tutorial callouts + how-to */
       --good: #16a34a;       /* green = correct answer */
       --good-bg: #dcfce7;    /* light green fill for the correct option */
       --bad: #dc2626;        /* red = wrong answer */
@@ -101,9 +102,9 @@
     /* ===== BOTTOM AREA: the answer buttons + controls (kept low for thumb reach) ===== */
     .answer-zone {
       flex: 0 0 auto;                 /* take only as much height as its content needs */
-      /* smaller bottom padding = the answer block sits lower on the screen, while
-         still leaving room for the Hint callout below the button in the tutorial. */
-      padding: 0.5rem 1.25rem 2.5rem;
+      /* small bottom padding so the answer block sits low, with the Hint button
+         near the bottom of the screen. */
+      padding: 0.5rem 1.25rem 1.25rem;
       text-align: center;
     }
     /* Small uppercase label above the choices ("WHICH WORD..."). */
@@ -318,7 +319,7 @@
     .callout {
       position: fixed;
       z-index: 61;
-      background: var(--accent);
+      background: var(--tutpanel);   /* transparent black */
       color: var(--accent-ink);
       font-size: 0.72rem;
       font-weight: 700;
@@ -331,29 +332,28 @@
     }
     /* The little triangle that points from a callout to its target. */
     .callout-arrow { position: absolute; width: 0; height: 0; border: 7px solid transparent; }
-    .dir-below .callout-arrow { bottom: 100%; border-bottom-color: var(--accent); transform: translateX(-50%); }
-    .dir-above .callout-arrow { top: 100%;    border-top-color: var(--accent);    transform: translateX(-50%); }
-    .dir-left  .callout-arrow { left: 100%;   border-left-color: var(--accent);   transform: translateY(-50%); }
-    .dir-right .callout-arrow { right: 100%;  border-right-color: var(--accent);  transform: translateY(-50%); }
+    .dir-below .callout-arrow { bottom: 100%; border-bottom-color: var(--tutpanel); transform: translateX(-50%); }
+    .dir-above .callout-arrow { top: 100%;    border-top-color: var(--tutpanel);    transform: translateX(-50%); }
+    .dir-left  .callout-arrow { left: 100%;   border-left-color: var(--tutpanel);   transform: translateY(-50%); }
+    .dir-right .callout-arrow { right: 100%;  border-right-color: var(--tutpanel);  transform: translateY(-50%); }
     /* The "Got it" button that starts the game. */
     /* The "how to play" text in the middle of the tutorial. There's no button now
        — tapping anywhere on the overlay starts the game. */
     .tut-howto {
       position: fixed;
       left: 50%;
-      top: 41%;                       /* centered in the empty space now that the buttons moved down */
+      top: 42%;                       /* centered in the empty space now that the buttons moved down */
       transform: translate(-50%, -50%);
       z-index: 62;
       width: min(85vw, 21rem);
       text-align: center;
       color: #fff;
-      background: var(--accent);      /* blue, matching the callouts and buttons */
+      background: var(--tutpanel);    /* transparent black, matching the callouts */
       border-radius: 1rem;
       padding: 0.9rem 1rem;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
     }
     .tut-howto-title { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.35rem; }
-    .tut-howto p { font-size: 0.8rem; line-height: 1.4; margin: 0 0 0.7rem; color: #eef0ff; }
+    .tut-howto p { font-size: 0.8rem; line-height: 1.4; margin: 0 0 0.7rem; color: #e5e7f0; }
     .tut-tap { font-size: 0.95rem; font-weight: 800; animation: tapPulse 1.4s ease-in-out infinite; }
     @keyframes tapPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
   </style>
@@ -439,7 +439,7 @@
   <div class="tutorial" id="tutorial" hidden>
     <div class="tut-howto">
       <div class="tut-howto-title">How to play</div>
-      <p>Match the emoji clues to the right word before time’s up. Hints cost points.</p>
+      <p>Match the emoji clues to the right word before time’s up. Each hint costs one point.</p>
       <div class="tut-tap">Tap anywhere to start</div>
     </div>
   </div>
@@ -826,10 +826,8 @@
     const TUTORIAL = [
       { target: "#score",   dir: "below", text: "Your points" },
       { target: "#timer",   dir: "below", text: "Time left" },
-      { target: "#emojis",  dir: "above", text: "Emoji clues" },
-      { target: "#options", dir: "above", text: "Tap the matching word" },
-      { target: "#pause",   dir: "above", text: "Pause" },
-      { target: "#action",  dir: "below", text: "Hint (−1 pt)" }
+      { target: "#emojis",  dir: "above", text: "Look at the emoji clues" },
+      { target: "#options", dir: "above", text: "Tap the matching word" }
     ];
     // Build one callout (label + arrow) for each entry.
     TUTORIAL.forEach(function (cfg) {
