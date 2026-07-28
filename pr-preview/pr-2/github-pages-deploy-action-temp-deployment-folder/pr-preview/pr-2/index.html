@@ -13,7 +13,7 @@
   <meta http-equiv="Expires" content="0" />
   <!-- The text shown in the browser tab. -->
   <title>Word Guess — Emoji Edition</title>
-  <!-- build-marker: hint-text-v3 -->  <!-- bump to force a fresh GitHub Pages rebuild -->
+  <!-- build-marker: transparent-callouts -->  <!-- bump to force a fresh GitHub Pages rebuild -->
 
 
   <!-- Everything between <style> and </style> is CSS: it controls how the page LOOKS. -->
@@ -27,6 +27,7 @@
       --muted: #7b8494;      /* dimmed text (hints, counter) */
       --accent: #6366f1;     /* brand purple used on buttons */
       --accent-ink: #ffffff; /* text color on top of the purple */
+      --tutpanel: rgba(15, 18, 30, 0.55); /* transparent black for tutorial callouts + how-to */
       --good: #16a34a;       /* green = correct answer */
       --good-bg: #dcfce7;    /* light green fill for the correct option */
       --bad: #dc2626;        /* red = wrong answer */
@@ -101,9 +102,9 @@
     /* ===== BOTTOM AREA: the answer buttons + controls (kept low for thumb reach) ===== */
     .answer-zone {
       flex: 0 0 auto;                 /* take only as much height as its content needs */
-      /* bottom padding keeps the buttons where they were before the caption was
-         removed, and leaves room for the Hint callout below the button. */
-      padding: 0.5rem 1.25rem 5rem;
+      /* small bottom padding so the answer block sits low, with the Hint button
+         near the bottom of the screen. */
+      padding: 0.5rem 1.25rem 1.25rem;
       text-align: center;
     }
     /* Small uppercase label above the choices ("WHICH WORD..."). */
@@ -318,7 +319,7 @@
     .callout {
       position: fixed;
       z-index: 61;
-      background: var(--accent);
+      background: var(--tutpanel);   /* transparent black */
       color: var(--accent-ink);
       font-size: 0.72rem;
       font-weight: 700;
@@ -331,23 +332,23 @@
     }
     /* The little triangle that points from a callout to its target. */
     .callout-arrow { position: absolute; width: 0; height: 0; border: 7px solid transparent; }
-    .dir-below .callout-arrow { bottom: 100%; border-bottom-color: var(--accent); transform: translateX(-50%); }
-    .dir-above .callout-arrow { top: 100%;    border-top-color: var(--accent);    transform: translateX(-50%); }
-    .dir-left  .callout-arrow { left: 100%;   border-left-color: var(--accent);   transform: translateY(-50%); }
-    .dir-right .callout-arrow { right: 100%;  border-right-color: var(--accent);  transform: translateY(-50%); }
+    .dir-below .callout-arrow { bottom: 100%; border-bottom-color: var(--tutpanel); transform: translateX(-50%); }
+    .dir-above .callout-arrow { top: 100%;    border-top-color: var(--tutpanel);    transform: translateX(-50%); }
+    .dir-left  .callout-arrow { left: 100%;   border-left-color: var(--tutpanel);   transform: translateY(-50%); }
+    .dir-right .callout-arrow { right: 100%;  border-right-color: var(--tutpanel);  transform: translateY(-50%); }
     /* The "Got it" button that starts the game. */
     /* The "how to play" text in the middle of the tutorial. There's no button now
        — tapping anywhere on the overlay starts the game. */
     .tut-howto {
       position: fixed;
       left: 50%;
-      top: 35%;                       /* upper-middle, clear of the callouts below */
+      top: 42%;                       /* centered in the empty space now that the buttons moved down */
       transform: translate(-50%, -50%);
       z-index: 62;
       width: min(85vw, 21rem);
       text-align: center;
       color: #fff;
-      background: rgba(15, 18, 30, 0.55);   /* subtle backing so the text stays readable */
+      background: var(--tutpanel);    /* transparent black, matching the callouts */
       border-radius: 1rem;
       padding: 0.9rem 1rem;
     }
@@ -355,23 +356,6 @@
     .tut-howto p { font-size: 0.8rem; line-height: 1.4; margin: 0 0 0.7rem; color: #e5e7f0; }
     .tut-tap { font-size: 0.95rem; font-weight: 800; animation: tapPulse 1.4s ease-in-out infinite; }
     @keyframes tapPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
-
-    /* Temporary visible version badge — a small green pill in the bottom-left,
-       above everything, so you can confirm the page loaded the latest build. */
-    .build-badge {
-      position: fixed;
-      left: 6px;
-      bottom: 6px;
-      z-index: 100;
-      background: #16a34a;
-      color: #fff;
-      font-size: 11px;
-      font-weight: 800;
-      padding: 2px 7px;
-      border-radius: 6px;
-      opacity: 0.9;
-      pointer-events: none;   /* never blocks a tap */
-    }
   </style>
 </head>
 <!-- The <body> is the visible page. Elements with an id="" are the ones the
@@ -455,14 +439,10 @@
   <div class="tutorial" id="tutorial" hidden>
     <div class="tut-howto">
       <div class="tut-howto-title">How to play</div>
-      <p>Match the emoji clues to the right word before time’s up. Hints cost points.</p>
+      <p>Match the emoji clues to the right word before time’s up. Each hint costs one point.</p>
       <div class="tut-tap">Tap anywhere to start</div>
     </div>
   </div>
-
-  <!-- Temporary visible version badge (bottom-left). Bumped each deploy so you can
-       tell at a glance whether the page loaded the latest version. Remove later. -->
-  <div class="build-badge">v3</div>
 
   <!-- Everything between <script> and </script> is JavaScript: it controls how
        the page BEHAVES (what happens when you tap the buttons). -->
@@ -846,10 +826,8 @@
     const TUTORIAL = [
       { target: "#score",   dir: "below", text: "Your points" },
       { target: "#timer",   dir: "below", text: "Time left" },
-      { target: "#emojis",  dir: "above", text: "Emoji clues" },
-      { target: "#options", dir: "above", text: "Tap the matching word" },
-      { target: "#pause",   dir: "above", text: "Pause" },
-      { target: "#action",  dir: "below", text: "Hint (−1 pt)" }
+      { target: "#emojis",  dir: "above", text: "Look at the emoji clues" },
+      { target: "#options", dir: "above", text: "Tap the matching word" }
     ];
     // Build one callout (label + arrow) for each entry.
     TUTORIAL.forEach(function (cfg) {
