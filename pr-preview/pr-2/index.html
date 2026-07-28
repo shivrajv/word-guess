@@ -13,7 +13,7 @@
   <meta http-equiv="Expires" content="0" />
   <!-- The text shown in the browser tab. -->
   <title>Word Guess — Emoji Edition</title>
-  <!-- build-marker: hint-text-v3 -->  <!-- bump to force a fresh GitHub Pages rebuild -->
+  <!-- build-marker: blue-howto-moved -->  <!-- bump to force a fresh GitHub Pages rebuild -->
 
 
   <!-- Everything between <style> and </style> is CSS: it controls how the page LOOKS. -->
@@ -101,9 +101,9 @@
     /* ===== BOTTOM AREA: the answer buttons + controls (kept low for thumb reach) ===== */
     .answer-zone {
       flex: 0 0 auto;                 /* take only as much height as its content needs */
-      /* bottom padding keeps the buttons where they were before the caption was
-         removed, and leaves room for the Hint callout below the button. */
-      padding: 0.5rem 1.25rem 5rem;
+      /* smaller bottom padding = the answer block sits lower on the screen, while
+         still leaving room for the Hint callout below the button in the tutorial. */
+      padding: 0.5rem 1.25rem 2.5rem;
       text-align: center;
     }
     /* Small uppercase label above the choices ("WHICH WORD..."). */
@@ -341,37 +341,21 @@
     .tut-howto {
       position: fixed;
       left: 50%;
-      top: 35%;                       /* upper-middle, clear of the callouts below */
+      top: 41%;                       /* centered in the empty space now that the buttons moved down */
       transform: translate(-50%, -50%);
       z-index: 62;
       width: min(85vw, 21rem);
       text-align: center;
       color: #fff;
-      background: rgba(15, 18, 30, 0.55);   /* subtle backing so the text stays readable */
+      background: var(--accent);      /* blue, matching the callouts and buttons */
       border-radius: 1rem;
       padding: 0.9rem 1rem;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
     }
     .tut-howto-title { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.35rem; }
-    .tut-howto p { font-size: 0.8rem; line-height: 1.4; margin: 0 0 0.7rem; color: #e5e7f0; }
+    .tut-howto p { font-size: 0.8rem; line-height: 1.4; margin: 0 0 0.7rem; color: #eef0ff; }
     .tut-tap { font-size: 0.95rem; font-weight: 800; animation: tapPulse 1.4s ease-in-out infinite; }
     @keyframes tapPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
-
-    /* Temporary visible version badge — a small green pill in the bottom-left,
-       above everything, so you can confirm the page loaded the latest build. */
-    .build-badge {
-      position: fixed;
-      left: 6px;
-      bottom: 6px;
-      z-index: 100;
-      background: #16a34a;
-      color: #fff;
-      font-size: 11px;
-      font-weight: 800;
-      padding: 2px 7px;
-      border-radius: 6px;
-      opacity: 0.9;
-      pointer-events: none;   /* never blocks a tap */
-    }
   </style>
 </head>
 <!-- The <body> is the visible page. Elements with an id="" are the ones the
@@ -459,10 +443,6 @@
       <div class="tut-tap">Tap anywhere to start</div>
     </div>
   </div>
-
-  <!-- Temporary visible version badge (bottom-left). Bumped each deploy so you can
-       tell at a glance whether the page loaded the latest version. Remove later. -->
-  <div class="build-badge">v3</div>
 
   <!-- Everything between <script> and </script> is JavaScript: it controls how
        the page BEHAVES (what happens when you tap the buttons). -->

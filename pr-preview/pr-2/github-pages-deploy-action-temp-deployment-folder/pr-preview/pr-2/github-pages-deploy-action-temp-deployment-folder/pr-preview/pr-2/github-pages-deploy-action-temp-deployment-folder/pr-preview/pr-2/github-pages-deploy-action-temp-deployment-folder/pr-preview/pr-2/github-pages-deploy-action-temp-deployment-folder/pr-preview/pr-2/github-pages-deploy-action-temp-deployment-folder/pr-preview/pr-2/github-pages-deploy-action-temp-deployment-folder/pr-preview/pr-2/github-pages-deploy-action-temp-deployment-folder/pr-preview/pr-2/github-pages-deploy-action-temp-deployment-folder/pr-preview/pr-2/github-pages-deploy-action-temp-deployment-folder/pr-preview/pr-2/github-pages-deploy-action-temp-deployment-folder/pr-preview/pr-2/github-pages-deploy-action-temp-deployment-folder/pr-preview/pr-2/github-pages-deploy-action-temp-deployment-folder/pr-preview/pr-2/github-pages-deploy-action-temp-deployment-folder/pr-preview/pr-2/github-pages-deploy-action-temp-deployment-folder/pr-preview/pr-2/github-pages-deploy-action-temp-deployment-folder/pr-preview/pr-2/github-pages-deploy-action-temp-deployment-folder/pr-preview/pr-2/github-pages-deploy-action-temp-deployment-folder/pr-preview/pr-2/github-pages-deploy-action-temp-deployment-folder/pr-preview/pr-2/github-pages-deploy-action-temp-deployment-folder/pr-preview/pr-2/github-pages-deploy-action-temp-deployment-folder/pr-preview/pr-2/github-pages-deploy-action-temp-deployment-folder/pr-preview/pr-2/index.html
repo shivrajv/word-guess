@@ -1,161 +1,89 @@
 <!DOCTYPE html>
-<!-- Tells the browser this is a modern HTML5 document. -->
 <html lang="en">
 <head>
-  <!-- Character encoding: UTF-8 lets us use emojis and any language. -->
   <meta charset="UTF-8" />
-  <!-- Makes the page scale correctly on phones instead of looking zoomed out. -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- The text shown in the browser tab. -->
   <title>Word Guess — Emoji Edition</title>
-
-  <!-- Everything between <style> and </style> is CSS: it controls how the page LOOKS. -->
   <style>
-    /* CSS variables: reusable values (mostly colors) defined once here and
-       reused below with var(--name). Change a color once, it updates everywhere. */
     :root {
-      --bg: #f7f8fc;         /* page background (very light grey) */
-      --card: #ffffff;       /* the white emoji card */
-      --ink: #1f2430;        /* main text color (near-black) */
-      --muted: #7b8494;      /* dimmed text (hints, counter) */
-      --accent: #6366f1;     /* brand purple used on buttons */
-      --accent-ink: #ffffff; /* text color on top of the purple */
-      --good: #16a34a;       /* green = correct answer */
-      --good-bg: #dcfce7;    /* light green fill for the correct option */
-      --bad: #dc2626;        /* red = wrong answer */
-      --bad-bg: #fee2e2;     /* light red fill for a wrong pick */
-      --shadow: 0 12px 40px rgba(31, 36, 48, 0.10); /* soft drop shadow */
+      --bg: #f7f8fc;
+      --card: #ffffff;
+      --ink: #1f2430;
+      --muted: #7b8494;
+      --accent: #6366f1;
+      --accent-ink: #ffffff;
+      --shadow: 0 12px 40px rgba(31, 36, 48, 0.10);
     }
-
-    /* box-sizing: border-box makes an element's width/height include its padding
-       and border, which makes sizing far more predictable. * = every element. */
     * { box-sizing: border-box; }
-
-    /* Make the page fill the whole screen height and remove default margins. */
     html, body { height: 100%; margin: 0; }
-
-    /* The body is a vertical stack (a flex column): word on top, flexible spacer
-       in the middle, emoji clues at the bottom. */
     body {
       display: flex;
       flex-direction: column;
       background: var(--bg);
       color: var(--ink);
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      -webkit-font-smoothing: antialiased; /* slightly smoother text on some browsers */
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* ===== TOP AREA: the four answer choices ===== */
-    .options-zone {
-      flex: 0 0 auto;                 /* take only as much height as its content needs */
-      padding: 2rem 1.25rem 1rem;
+    /* Top: the word */
+    .word-zone {
+      flex: 0 0 auto;
+      padding: 2.5rem 1.25rem 1.25rem;
       text-align: center;
     }
-    /* Small uppercase label above the choices ("WHICH WORD..."). */
     .kicker {
       text-transform: uppercase;
       letter-spacing: 0.18em;
       font-size: 0.72rem;
       font-weight: 700;
       color: var(--muted);
-      margin-bottom: 1rem;
+      margin-bottom: 0.75rem;
     }
-    /* The four choices, laid out in a 2x2 grid. */
-    .options {
-      max-width: 32rem;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr; /* two equal columns => 2x2 for four buttons */
-      gap: 0.75rem;
-    }
-    /* One answer choice: a pill-shaped ("circle"-style) button, white with a border. */
-    .option {
-      appearance: none;
-      cursor: pointer;
-      background: var(--card);
-      color: var(--ink);
-      border: 2px solid #e5e7f0;
-      font-size: clamp(0.95rem, 4vw, 1.15rem);
-      font-weight: 700;
-      padding: 0.95rem 0.75rem;
-      border-radius: 999px;           /* fully rounded */
-      box-shadow: var(--shadow);
-      transition: transform 0.08s ease, border-color 0.15s ease, background 0.15s ease;
+    .word {
+      font-size: clamp(2.2rem, 9vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      line-height: 1.05;
       word-break: break-word;
     }
-    .option:not(:disabled):hover  { border-color: var(--accent); }
-    .option:not(:disabled):active { transform: translateY(1px) scale(0.99); }
-    /* After answering, the JavaScript adds one of these to color the buttons. */
-    .option.correct { background: var(--good-bg); border-color: var(--good); color: var(--good); }
-    .option.wrong   { background: var(--bad-bg);  border-color: var(--bad);  color: var(--bad); }
-    /* Options that were neither the answer nor your pick fade out once disabled. */
-    .option:disabled { cursor: default; opacity: 0.5; }
-    .option.correct:disabled, .option.wrong:disabled { opacity: 1; } /* keep colored ones bold */
 
-    /* ===== MIDDLE AREA: the correct/incorrect marker =====
-       This flexible zone sits between the choices (top) and the emojis (bottom).
-       flex: 1 1 auto makes it grow to fill leftover space and centers the mark. */
-    .mark-zone {
+    /* Middle: spacer / count */
+    .middle {
       flex: 1 1 auto;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 4.5rem;
-    }
-    /* The ✓ / ✗ badge: a solid colored circle with a white symbol, so it's easy
-       to read. It's hidden until you answer, when the JavaScript adds a color
-       class (.correct or .wrong) that reveals and colors it. */
-    .mark {
-      display: none;                  /* hidden until a color class is added */
-      width:  clamp(3.5rem, 16vw, 5rem);
-      height: clamp(3.5rem, 16vw, 5rem);
-      border-radius: 50%;             /* a circle */
-      align-items: center;
-      justify-content: center;
-      font-size: clamp(2rem, 9vw, 3rem);
-      font-weight: 800;
-      color: #fff;                    /* white symbol on the colored circle */
-      box-shadow: var(--shadow);
-    }
-    .mark.correct { display: flex; background: var(--good); animation: pop 0.25s ease; }
-    .mark.wrong   { display: flex; background: var(--bad);  animation: pop 0.25s ease; }
-    @keyframes pop {
-      0%   { transform: scale(0.4); opacity: 0; }
-      100% { transform: scale(1);   opacity: 1; }
+      color: var(--muted);
+      font-size: 0.85rem;
     }
 
-    /* ===== BOTTOM AREA: the emoji clue card and the buttons ===== */
+    /* Bottom: the 3 emoji clues */
     .emoji-zone {
       flex: 0 0 auto;
       padding: 1.5rem 1.25rem 2.5rem;
     }
-    /* The white rounded card that holds the emoji clues. It's a flex row that
-       wraps onto more lines (flex-wrap) once there are too many emojis to fit. */
     .emoji-card {
       max-width: 32rem;
-      margin: 0 auto 1rem;             /* centered, with space below */
+      margin: 0 auto 1rem;
       background: var(--card);
-      border-radius: 1.25rem;          /* rounded corners */
+      border-radius: 1.25rem;
       box-shadow: var(--shadow);
       padding: 1.75rem 1rem;
       display: flex;
-      flex-wrap: wrap;                 /* let emojis flow onto more rows */
+      flex-wrap: wrap;
       align-items: center;
       justify-content: center;
-      gap: clamp(0.4rem, 3vw, 1.5rem); /* space between emojis */
+      gap: clamp(0.4rem, 3vw, 1.5rem);
     }
     .emoji {
       line-height: 1;
-      user-select: none;               /* stop the emojis being text-selected on tap */
+      user-select: none;
     }
-    /* The emojis shrink as more are revealed so all 15 still fit. The JavaScript
-       swaps the card between these three size classes (size-lg / md / sm). */
-    .emoji-card.size-lg .emoji { font-size: clamp(3rem, 15vw, 5rem); }     /* 1–3 shown */
-    .emoji-card.size-md .emoji { font-size: clamp(2.5rem, 10vw, 3.5rem); } /* 4–6 shown */
-    .emoji-card.size-sm .emoji { font-size: clamp(1.9rem, 7vw, 2.75rem); } /* 7–15 shown */
+    /* emoji size scales down as more clues are revealed */
+    .emoji-card.size-lg .emoji { font-size: clamp(3rem, 15vw, 5rem); }
+    .emoji-card.size-md .emoji { font-size: clamp(2.5rem, 10vw, 3.5rem); }
+    .emoji-card.size-sm .emoji { font-size: clamp(1.9rem, 7vw, 2.75rem); }
 
-    /* Row holding the "More emojis" button. min-height reserves the space so the
-       layout doesn't jump when the button hides itself once all 15 are shown. */
     .more-wrap {
       max-width: 32rem;
       margin: 0 auto 1.25rem;
@@ -163,9 +91,8 @@
       justify-content: center;
       min-height: 2.4rem;
     }
-    /* The outlined "More emojis" button (purple border that fills in on hover). */
     .more-btn {
-      appearance: none;                /* remove the browser's default button styling */
+      appearance: none;
       cursor: pointer;
       background: transparent;
       color: var(--accent);
@@ -173,20 +100,17 @@
       font-size: 0.9rem;
       font-weight: 700;
       padding: 0.55rem 1.4rem;
-      border-radius: 999px;            /* fully rounded "pill" shape */
+      border-radius: 999px;
       transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
     }
-    .more-btn:not(:disabled):hover  { background: var(--accent); color: var(--accent-ink); } /* fill in on hover */
-    .more-btn:not(:disabled):active { transform: translateY(1px) scale(0.99); }             /* press-down effect */
-    .more-btn:disabled { opacity: 0.4; cursor: default; }                    /* greyed out after answering */
-    /* Row that centers the main "Next word" button. */
+    .more-btn:hover { background: var(--accent); color: var(--accent-ink); }
+    .more-btn:active { transform: translateY(1px) scale(0.99); }
     .controls {
       max-width: 32rem;
       margin: 0 auto;
       display: flex;
       justify-content: center;
     }
-    /* The solid purple "Next word" button. */
     .next-btn {
       appearance: none;
       border: none;
@@ -200,9 +124,8 @@
       box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
       transition: transform 0.08s ease, box-shadow 0.15s ease;
     }
-    .next-btn:hover { box-shadow: 0 10px 26px rgba(99, 102, 241, 0.45); } /* lift on hover */
-    .next-btn:active { transform: translateY(1px) scale(0.99); }         /* press-down effect */
-    /* Small grey helper text under the buttons. */
+    .next-btn:hover { box-shadow: 0 10px 26px rgba(99, 102, 241, 0.45); }
+    .next-btn:active { transform: translateY(1px) scale(0.99); }
     .hint {
       text-align: center;
       color: var(--muted);
@@ -211,46 +134,27 @@
     }
   </style>
 </head>
-<!-- The <body> is the visible page. Elements with an id="" are the ones the
-     JavaScript at the bottom finds and updates while you play. -->
 <body>
-  <!-- TOP: the four answer choices. The JavaScript creates the four buttons
-       inside #options and decides which one is correct. -->
-  <section class="options-zone">
-    <div class="kicker">Which word do these emojis mean?</div>
-    <div class="options" id="options"></div>
+  <section class="word-zone">
+    <div class="kicker">Guess the emojis</div>
+    <h1 class="word" id="word">&nbsp;</h1>
   </section>
 
-  <!-- MIDDLE: the ✓ / ✗ marker. Empty until you answer; the JavaScript fills it. -->
-  <div class="mark-zone"><span class="mark" id="mark"></span></div>
+  <div class="middle" id="counter"></div>
 
-  <!-- BOTTOM: the emoji clues and the two buttons. -->
   <section class="emoji-zone">
-    <!-- #emojis is filled by the JavaScript with one <span> per revealed emoji. -->
     <div class="emoji-card size-lg" id="emojis"></div>
-
-    <!-- "More emojis" button. The JavaScript shows/hides it and updates its label. -->
     <div class="more-wrap">
       <button class="more-btn" id="more" type="button">＋ More emojis</button>
     </div>
-
-    <!-- "Next word" button: jumps to a new random word. -->
     <div class="controls">
       <button class="next-btn" id="next" type="button">Next word →</button>
     </div>
-
-    <p class="hint"><span id="counter"></span> · Tap “More emojis” for a hint · “Next word” or Space to continue</p>
+    <p class="hint">Tap “More emojis” for extra clues · “Next word” or Space for a new word</p>
   </section>
 
-  <!-- Everything between <script> and </script> is JavaScript: it controls how
-       the page BEHAVES (what happens when you tap the buttons). -->
   <script>
-    // ===== THE DATA =====
-    // WORDS is the game's content: a list of 100 items. Each item is an object
-    // with two properties:
-    //   w = the word (a piece of text, e.g. "Beach")
-    //   e = an array (list) of 15 emojis that hint at that word
-    // "const" means this list is set once and never reassigned.
+    // 100 words, each with 15 related emojis.
     const WORDS = [
       { w: "Beach",       e: ["🏖️","🌊","☀️","🏝️","🐚","🩴","👙","⛱️","🌴","🦀","🏄","🌅","🕶️","🍹","🐠"] },
       { w: "Rain",        e: ["🌧️","☔","💧","⛈️","🌦️","☁️","🌂","🥾","🐌","🌈","💦","🌩️","🦆","🏙️","😔"] },
@@ -354,165 +258,75 @@
       { w: "Magic",       e: ["🪄","✨","🧙","🔮","🎩","🐇","🌟","🃏","🧚","💫","🕯️","🧿","🌈","🦄","🎆"] },
     ];
 
-    // ===== GRAB THE PAGE ELEMENTS =====
-    // document.getElementById("x") finds the element with id="x" in the HTML
-    // above, so we can read or change it from JavaScript.
-    const optionsEl = document.getElementById("options"); // holds the 4 choice buttons
-    const emojisEl  = document.getElementById("emojis");  // the emoji card
-    const markEl    = document.getElementById("mark");    // the ✓ / ✗ marker
-    const counterEl = document.getElementById("counter"); // the "Word N of 100" text
-    const nextBtn   = document.getElementById("next");    // the "Next word" button
-    const moreBtn   = document.getElementById("more");    // the "More emojis" button
+    const wordEl    = document.getElementById("word");
+    const emojisEl  = document.getElementById("emojis");
+    const counterEl = document.getElementById("counter");
+    const nextBtn   = document.getElementById("next");
 
-    // ===== SETTINGS (change these to tune the game) =====
-    const START   = 3;   // how many emojis show when a word first appears
-    const STEP    = 3;   // how many more emojis each "More emojis" tap reveals
-    const CHOICES = 4;   // how many answer options to show (1 correct + 3 decoys)
+    const moreBtn = document.getElementById("more");
 
-    // ===== GAME STATE (values that change as you play) =====
-    // "let" (unlike "const") means the value can be reassigned later.
-    let current  = -1;      // index (into WORDS) of the word being guessed
-    let shuffled = [];      // the current word's 15 emojis, in a shuffled order
-    let revealed = START;   // how many of those emojis are currently visible
-    let answered = false;   // has the player picked an option this round yet?
-    let queue    = [];      // shuffled word indices still to show in this pass
-    let seen     = 0;       // how many words shown so far this pass (1..100)
+    const START = 3;   // emojis shown when a word first appears
+    const STEP  = 3;   // emojis revealed per "More emojis" tap
 
-    // Return a shuffled COPY of an array (the original list is left untouched).
-    // This is the Fisher–Yates shuffle: walk from the end, swapping each item
-    // with a random earlier one. We shuffle so the first 3 emojis shown are
-    // random each time, not always the same three.
+    let current = -1;
+    let shuffled = [];   // this word's 15 emojis in a shuffled order
+    let revealed = START;
+
     function shuffle(arr) {
-      const a = arr.slice();                            // make a copy so we don't change WORDS
+      const a = arr.slice();
       for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));  // random index from 0 to i
-        [a[i], a[j]] = [a[j], a[i]];                    // swap the two items
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
       }
       return a;
     }
 
-    // Choose which emoji size to use based on how many are showing, so that more
-    // emojis => smaller size and they still fit. Returns a CSS class name.
     function sizeClass(n) {
-      if (n <= 3) return "size-lg";   // 1–3 emojis: big
-      if (n <= 6) return "size-md";   // 4–6 emojis: medium
-      return "size-sm";               // 7–15 emojis: small
+      if (n <= 3) return "size-lg";
+      if (n <= 6) return "size-md";
+      return "size-sm";
     }
 
-    // Redraw the emoji card and the "More emojis" button to match the current
-    // state. Called any time something changes — this is the heart of the UI.
     function render() {
-      // Set the card's size class (which controls emoji font size via the CSS).
       emojisEl.className = "emoji-card " + sizeClass(revealed);
-
-      // Empty the card, then add one <span> for each emoji we want to show.
       emojisEl.innerHTML = "";
-      shuffled.slice(0, revealed).forEach(function (em) { // take the first `revealed` emojis
+      shuffled.slice(0, revealed).forEach(function (em) {
         const span = document.createElement("span");
         span.className = "emoji";
         span.textContent = em;
-        emojisEl.appendChild(span);                       // put it inside the card
+        emojisEl.appendChild(span);
       });
 
-      // Update the "More emojis" button: show how many clues are left, or hide
-      // the button entirely once every emoji has been revealed.
       const remaining = shuffled.length - revealed;
       if (remaining > 0) {
-        moreBtn.style.display = "";                        // make sure it's visible
+        moreBtn.style.display = "";
         moreBtn.textContent = "＋ More emojis (" + remaining + " left)";
       } else {
-        moreBtn.style.display = "none";                    // all 15 shown → hide it
+        moreBtn.style.display = "none";   // all 15 shown → button disappears
       }
 
-      // Update the "Word N of 100" progress counter for this pass.
-      counterEl.textContent = "Word " + seen + " of " + WORDS.length;
+      counterEl.textContent = "Word " + (current + 1) + " of " + WORDS.length;
     }
 
-    // Build the four answer choices for a given correct word. Returns an array of
-    // word-indices: the correct one plus three random decoys, all shuffled so the
-    // correct answer isn't always in the same spot.
-    function buildChoices(answerIdx) {
-      // Every word index except the correct one, shuffled; keep the first three.
-      const decoys = shuffle(WORDS.map(function (_, i) { return i; })
-                              .filter(function (i) { return i !== answerIdx; }))
-                     .slice(0, CHOICES - 1);
-      return shuffle(decoys.concat(answerIdx));   // add the answer back, shuffle positions
-    }
-
-    // Draw the four option buttons for the current word.
-    function renderOptions() {
-      optionsEl.innerHTML = "";
-      buildChoices(current).forEach(function (idx) {
-        const btn = document.createElement("button");
-        btn.className = "option";
-        btn.type = "button";
-        btn.textContent = WORDS[idx].w;
-        btn.dataset.idx = idx;                     // remember which word this button is
-        btn.addEventListener("click", function () { onAnswer(idx); });
-        optionsEl.appendChild(btn);
-      });
-    }
-
-    // Handle a tapped answer: show ✓ or ✗, color the buttons, then lock everything
-    // except the "Next word" button.
-    function onAnswer(chosenIdx) {
-      if (answered) return;                        // ignore extra taps once answered
-      answered = true;
-
-      const correct = (chosenIdx === current);
-      markEl.textContent = correct ? "✓" : "✗";
-      markEl.className = "mark " + (correct ? "correct" : "wrong");
-
-      // Color the buttons and disable every option.
-      Array.prototype.forEach.call(optionsEl.children, function (btn) {
-        const idx = Number(btn.dataset.idx);
-        btn.disabled = true;
-        if (idx === current) btn.classList.add("correct");        // always reveal the answer
-        else if (idx === chosenIdx) btn.classList.add("wrong");   // and flag a wrong pick
-      });
-
-      moreBtn.disabled = true;                     // no more hints after answering
-    }
-
-    // Start a fresh round: take the next word from the shuffled queue, build new
-    // choices, reset clues to 3, clear the marker. Runs on "Next word", the Space
-    // key, and once at startup.
     function nextWord() {
-      // Refill and reshuffle the queue once all 100 words have been shown, so
-      // every word appears exactly once per pass, then the order changes.
-      if (queue.length === 0) {
-        queue = shuffle(WORDS.map(function (_, i) { return i; }));
-        seen = 0;
+      let idx = Math.floor(Math.random() * WORDS.length);
+      if (WORDS.length > 1) {
+        while (idx === current) idx = Math.floor(Math.random() * WORDS.length);
       }
-      current = queue.pop();   // take the next word index off the queue
-      seen++;
-
-      answered = false;
-      markEl.textContent = "";
-      markEl.className = "mark";
-      moreBtn.disabled = false;
-
-      shuffled = shuffle(WORDS[current].e);  // shuffle this word's 15 emojis
-      revealed = START;                      // show just 3 to begin with
-      renderOptions();                       // draw the four choices
-      render();                              // draw the emojis + counter + more button
+      current = idx;
+      wordEl.textContent = WORDS[idx].w;
+      shuffled = shuffle(WORDS[idx].e);
+      revealed = START;
+      render();
     }
 
-    // Reveal STEP (3) more emojis, but never more than the 15 that exist, and not
-    // once the round has been answered. Runs when you tap "More emojis".
     function moreEmojis() {
-      if (answered) return;
       revealed = Math.min(revealed + STEP, shuffled.length);
       render();
     }
 
-    // ===== HOOK THE BUTTONS UP =====
-    // addEventListener("click", fn) means "run function fn whenever this is clicked".
     nextBtn.addEventListener("click", nextWord);
     moreBtn.addEventListener("click", moreEmojis);
-
-    // Also let the Space key trigger "Next word". e.preventDefault() stops the
-    // page from also scrolling down when Space is pressed.
     document.addEventListener("keydown", function (e) {
       if (e.code === "Space" || e.key === " ") {
         e.preventDefault();
@@ -520,8 +334,6 @@
       }
     });
 
-    // ===== START THE GAME =====
-    // Show the first word right away when the page finishes loading.
     nextWord();
   </script>
 </body>
