@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- The text shown in the browser tab. -->
   <title>Word Guess — Emoji Edition</title>
-  <!-- build-marker: no-checkmark -->  <!-- bump to force a fresh GitHub Pages rebuild -->
+  <!-- build-marker: tutorial-reposition -->  <!-- bump to force a fresh GitHub Pages rebuild -->
 
 
   <!-- Everything between <style> and </style> is CSS: it controls how the page LOOKS. -->
@@ -332,8 +332,8 @@
     .tut-start {
       position: fixed;
       left: 50%;
-      top: 45%;
-      transform: translate(-50%, -50%);
+      bottom: 1.5rem;                 /* moved to the bottom so it covers nothing */
+      transform: translateX(-50%);
       z-index: 62;
       appearance: none;
       border: none;
@@ -346,7 +346,11 @@
       border-radius: 999px;
       box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
     }
-    .tut-start:active { transform: translate(-50%, -50%) scale(0.98); }
+    .tut-start:active { transform: translateX(-50%) scale(0.98); }
+    /* While the tutorial is up, reserve space at the bottom for the "Got it"
+       button. This pushes the game (and the Hint button) up so the Hint callout
+       has room below the button without the "Got it" button covering it. */
+    body.tutoring { padding-bottom: 5.5rem; }
   </style>
 </head>
 <!-- The <body> is the visible page. Elements with an id="" are the ones the
@@ -815,10 +819,10 @@
     const TUTORIAL = [
       { target: "#score",   dir: "below", text: "Your points" },
       { target: "#timer",   dir: "below", text: "Time left" },
-      { target: "#emojis",  dir: "below", text: "Emoji clues" },
+      { target: "#emojis",  dir: "above", text: "Emoji clues" },
       { target: "#options", dir: "above", text: "Tap the matching word" },
-      { target: "#pause",   dir: "left",  text: "Pause" },
-      { target: "#action",  dir: "right", text: "Hint (−1 pt) — becomes “Next word” after you answer" }
+      { target: "#pause",   dir: "above", text: "Pause" },
+      { target: "#action",  dir: "below", text: "Hint (−1 pt) — becomes “Next word” after you answer" }
     ];
     // Build one callout (label + arrow) for each entry.
     TUTORIAL.forEach(function (cfg) {
@@ -861,10 +865,12 @@
 
     function showTutorial() {
       tutorialEl.hidden = false;
-      positionCallouts();
+      document.body.classList.add("tutoring");  // reserve bottom space for "Got it"
+      positionCallouts();                        // (measured after the reflow above)
     }
     function dismissTutorial() {
       tutorialEl.hidden = true;
+      document.body.classList.remove("tutoring");
       beginTimer();                          // the clock only starts now
     }
 
