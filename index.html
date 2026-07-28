@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- The text shown in the browser tab. -->
   <title>Word Guess — Emoji Edition</title>
-  <!-- build-marker: gotit-middle -->  <!-- bump to force a fresh GitHub Pages rebuild -->
+  <!-- build-marker: tap-to-start -->  <!-- bump to force a fresh GitHub Pages rebuild -->
 
 
   <!-- Everything between <style> and </style> is CSS: it controls how the page LOOKS. -->
@@ -96,7 +96,9 @@
     /* ===== BOTTOM AREA: the answer buttons + controls (kept low for thumb reach) ===== */
     .answer-zone {
       flex: 0 0 auto;                 /* take only as much height as its content needs */
-      padding: 0.5rem 1.25rem 2rem;
+      /* bottom padding keeps the buttons where they were before the caption was
+         removed, and leaves room for the Hint callout below the button. */
+      padding: 0.5rem 1.25rem 5rem;
       text-align: center;
     }
     /* Small uppercase label above the choices ("WHICH WORD..."). */
@@ -329,24 +331,25 @@
     .dir-left  .callout-arrow { left: 100%;   border-left-color: var(--accent);   transform: translateY(-50%); }
     .dir-right .callout-arrow { right: 100%;  border-right-color: var(--accent);  transform: translateY(-50%); }
     /* The "Got it" button that starts the game. */
-    .tut-start {
+    /* The "how to play" text in the middle of the tutorial. There's no button now
+       — tapping anywhere on the overlay starts the game. */
+    .tut-howto {
       position: fixed;
       left: 50%;
-      top: 40%;                       /* centered in the middle, clear of the callouts */
+      top: 35%;                       /* upper-middle, clear of the callouts below */
       transform: translate(-50%, -50%);
       z-index: 62;
-      appearance: none;
-      border: none;
-      cursor: pointer;
-      background: #fff;
-      color: var(--accent);
-      font-size: 1rem;
-      font-weight: 800;
-      padding: 0.9rem 1.9rem;
-      border-radius: 999px;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+      width: min(85vw, 21rem);
+      text-align: center;
+      color: #fff;
+      background: rgba(15, 18, 30, 0.55);   /* subtle backing so the text stays readable */
+      border-radius: 1rem;
+      padding: 0.9rem 1rem;
     }
-    .tut-start:active { transform: translate(-50%, -50%) scale(0.98); }
+    .tut-howto-title { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.35rem; }
+    .tut-howto p { font-size: 0.8rem; line-height: 1.4; margin: 0 0 0.7rem; color: #e5e7f0; }
+    .tut-tap { font-size: 0.95rem; font-weight: 800; animation: tapPulse 1.4s ease-in-out infinite; }
+    @keyframes tapPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
   </style>
 </head>
 <!-- The <body> is the visible page. Elements with an id="" are the ones the
@@ -405,7 +408,6 @@
       <button class="next-btn" id="action" type="button">Hint</button>
     </div>
 
-    <p class="hint">“Hint” reveals more emojis (−1 point each) · after you answer it becomes “Next word” · Space to continue</p>
   </section>
 
     <!-- PAUSED card: one white rounded card covering the whole play area (the
@@ -429,7 +431,11 @@
   <!-- TUTORIAL overlay: shown once when the page loads. The JavaScript adds a
        labelled arrow pointing at each part of the game; "Got it" starts play. -->
   <div class="tutorial" id="tutorial" hidden>
-    <button class="tut-start" id="tutStart" type="button">Got it — let’s play</button>
+    <div class="tut-howto">
+      <div class="tut-howto-title">How to play</div>
+      <p>Match the emoji clues to the right word before time’s up. Hints cost points.</p>
+      <div class="tut-tap">Tap anywhere to start</div>
+    </div>
   </div>
 
   <!-- Everything between <script> and </script> is JavaScript: it controls how
@@ -559,7 +565,6 @@
     const pausedEl     = document.getElementById("paused");      // the Paused overlay
     const playBtn      = document.getElementById("play");        // the "Play" button on it
     const tutorialEl   = document.getElementById("tutorial");    // the first-run tutorial overlay
-    const tutStartBtn  = document.getElementById("tutStart");    // its "Got it" button
 
     // ===== SETTINGS (change these to tune the game) =====
     const START      = 3;    // how many emojis show when a word first appears
@@ -878,7 +883,7 @@
     againBtn.addEventListener("click", startGame);   // "Try again" restarts everything
     pauseBtn.addEventListener("click", pauseGame);   // the "Pause" button (now in the answer area)
     playBtn.addEventListener("click", resumeGame);   // "Play" resumes
-    tutStartBtn.addEventListener("click", dismissTutorial);   // "Got it" starts the game
+    tutorialEl.addEventListener("click", dismissTutorial);    // tap anywhere on the overlay starts the game
     window.addEventListener("resize", function () {  // keep the callouts aligned
       if (!tutorialEl.hidden) positionCallouts();
     });
