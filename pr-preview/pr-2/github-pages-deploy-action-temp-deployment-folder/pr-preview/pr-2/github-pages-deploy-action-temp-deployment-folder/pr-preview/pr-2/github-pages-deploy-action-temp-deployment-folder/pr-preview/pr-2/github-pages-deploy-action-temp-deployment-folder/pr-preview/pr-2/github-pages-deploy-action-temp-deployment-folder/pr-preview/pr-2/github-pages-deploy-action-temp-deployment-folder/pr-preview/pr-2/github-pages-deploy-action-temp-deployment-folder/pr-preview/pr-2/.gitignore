@@ -1,9 +1,0 @@
-# OS / editor cruft
-.DS_Store
-Thumbs.db
-*.swp
-.idea/
-.vscode/
-
-# Dependencies (in case we add a build step later)
-node_modules/
